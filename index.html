@@ -174,6 +174,14 @@ tbody tr:hover{background:var(--bg)}
 .facilities-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
 .facility-card{background:var(--card);border-radius:20px;padding:20px;box-shadow:var(--shadow);transition:.3s;cursor:pointer;border:2px solid transparent}
 .facility-card:hover{transform:translateY(-5px);border-color:var(--primary)}
+.card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.btn-sm{padding:7px 10px;font-size:12px;border-radius:9px}
+.checklist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+.checklist-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+.checklist-card h4{font-size:17px;margin-bottom:8px}
+.checklist-card .meta{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.checklist-card .meta span{font-size:12px;background:var(--bg);border:1px solid var(--border);padding:5px 9px;border-radius:999px;color:var(--text2)}
+.checklist-items{margin-top:12px;padding-right:18px;color:var(--text2);font-size:13px;line-height:1.9}
 .facility-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px}
 .facility-icon{width:55px;height:55px;border-radius:15px;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:white;font-size:22px}
 .facility-card h4{font-size:16px;font-weight:700;margin-bottom:5px;color:var(--text)}
@@ -342,6 +350,7 @@ tbody tr:hover{background:var(--bg)}
       <div class="menu-sec">
         <div class="menu-sec-title">التقارير</div>
         <div class="menu-item" onclick="showPage('daily',this)"><i class="fas fa-calendar-day"></i><span>التقارير اليومية</span></div>
+        <div class="menu-item" onclick="showPage('checklists',this)"><i class="fas fa-clipboard-check"></i><span>قوائم التحقق</span></div>
         <div class="menu-item" onclick="showPage('weekly',this)"><i class="fas fa-calendar-week"></i><span>التقارير الأسبوعية</span></div>
         <div class="menu-item" onclick="showPage('monthly',this)"><i class="fas fa-calendar-alt"></i><span>التقارير الشهرية</span></div>
         <div class="menu-item" onclick="showPage('incidents',this)"><i class="fas fa-exclamation-triangle"></i><span>حالات العدوى</span></div>
@@ -520,6 +529,24 @@ tbody tr:hover{background:var(--bg)}
           </div>
         </div>
         <div class="card"><div style="overflow-x:auto"><table><thead><tr><th>رقم التقرير</th><th>المرفق</th><th>التاريخ</th><th>الحالات</th><th>الالتزام</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody id="dailyTable"></tbody></table></div></div>
+      </div>
+
+      <div class="page" id="checklists">
+        <div class="page-header">
+          <div><h1>قوائم التحقق</h1><p>نماذج تحقق مخصصة لكل منشأة واختصاص وقسم</p></div>
+          <div class="export-group">
+            <button class="export-btn pdf" onclick="exportPDF('checklists')"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button class="export-btn excel" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+            <button class="btn btn-primary" onclick="openModal('newChecklistModal')"><i class="fas fa-plus"></i> قائمة جديدة</button>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:18px">
+          <div class="form-row">
+            <div class="form-group"><label>فلترة حسب المنشأة</label><select id="checklistFacilityFilter" onchange="renderChecklists()"></select></div>
+            <div class="form-group"><label>فلترة حسب الاختصاص</label><select id="checklistDepartmentFilter" onchange="renderChecklists()"></select></div>
+          </div>
+        </div>
+        <div class="checklist-grid" id="checklistsGrid"></div>
       </div>
 
       <!-- Weekly -->
@@ -701,6 +728,28 @@ tbody tr:hover{background:var(--bg)}
   </div>
 </div>
 
+<div class="modal" id="newChecklistModal">
+  <div class="modal-content">
+    <div class="modal-header"><h3>قائمة تحقق جديدة</h3><button class="modal-close" onclick="closeModal('newChecklistModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>عنوان القائمة</label><input type="text" placeholder="مثال: نظافة اليدين - قسم الجراحة"></div>
+      <div class="form-row">
+        <div class="form-group"><label>المنشأة</label><select id="checklistFacilitySelect"></select></div>
+        <div class="form-group"><label>الاختصاص / القسم</label><input type="text" placeholder="الجراحة، التوليد، التعقيم..."></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>التكرار</label><select><option>يومي</option><option>أسبوعي</option><option>شهري</option></select></div>
+        <div class="form-group"><label>المعيار العالمي</label><select><option>WHO</option><option>CDC</option><option>محلي</option></select></div>
+      </div>
+      <div class="form-group"><label>البنود - كل بند بسطر</label><textarea style="width:100%;padding:12px;border:2px solid var(--border);border-radius:12px;min-height:140px;font-family:inherit;background:var(--card);color:var(--text)" placeholder="توفر معقم اليدين&#10;فرز النفايات الطبية&#10;تطهير الأسطح عالية اللمس"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('newChecklistModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="save('newChecklistModal','تم حفظ قائمة التحقق')"><i class="fas fa-save"></i> حفظ</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="newIncidentModal">
   <div class="modal-content">
     <div class="modal-header"><h3>تسجيل حالة عدوى</h3><button class="modal-close" onclick="closeModal('newIncidentModal')">×</button></div>
@@ -771,6 +820,13 @@ const incidents=[
   {id:'INC-2024-001',type:'عدوى مستشفية',facility:'مستشفى الرحمة',date:'2024-01-14',status:'نشطة'},
   {id:'INC-2024-002',type:'عدوى جراحية',facility:'مستشفى الأمل',date:'2024-01-13',status:'قيد التحقيق'},
   {id:'INC-2024-003',type:'عدوى دم',facility:'مركز النور',date:'2024-01-12',status:'مغلقة'}
+];
+
+let checklistTemplates=[
+  {id:'chk-core', title:'التقييم العام لضبط العدوى', facility:'كل المنشآت', department:'عام', frequency:'يومي', standard:'WHO/CDC', items:['توفر مواد نظافة اليدين عند نقاط الرعاية','فرز النفايات الطبية والحادة في حاويات مطابقة','تنظيف وتطهير الأسطح عالية اللمس','توثيق الحوادث والتعرض المهني فوراً']},
+  {id:'chk-surgery', title:'غرف العمليات والجراحة', facility:'مشفى ابن الوليد', department:'الجراحة', frequency:'يومي', standard:'WHO', items:['تعقيم الأدوات قبل الاستخدام','الالتزام بنظافة اليدين الجراحية','تطهير غرفة العمليات بين الحالات','التخلص الآمن من الأدوات الحادة']},
+  {id:'chk-obgyn', title:'النسائية والتوليد', facility:'مشفى حماه', department:'التوليد', frequency:'يومي', standard:'WHO', items:['تجهيز غرفة الولادة قبل كل حالة','توفر مستلزمات الولادة النظيفة والمعقمة','التخلص الآمن من المشيمة والنفايات الملوثة','تطهير الأسرة والطاولات بين الحالات']},
+  {id:'chk-sterilization', title:'التعقيم المركزي', facility:'كل المنشآت', department:'التعقيم', frequency:'يومي', standard:'CDC', items:['توثيق دورات التعقيم','فصل الأدوات النظيفة عن الملوثة','استخدام مؤشرات التعقيم','تخزين الأدوات المعقمة بشكل آمن']}
 ];
 
 let auditLogs=[
@@ -915,6 +971,16 @@ function mapServerState(state){
     date: i.date,
     status: i.status || 'نشطة'
   })));
+  const remoteChecklists = (state.checklistTemplates && state.checklistTemplates.length ? state.checklistTemplates : state.checklists && state.checklists.length ? state.checklists : checklistTemplates);
+  replaceArray(checklistTemplates, remoteChecklists.map(c => ({
+    id: c.id || `chk-${Date.now()}`,
+    title: c.title,
+    facility: c.facility || facilityNameById(c.facilityId, state) || 'كل المنشآت',
+    department: c.department || c.scope || 'عام',
+    frequency: c.frequency || 'يومي',
+    standard: c.standard || c.category || 'WHO',
+    items: c.items || []
+  })));
 }
 
 function facilityNameById(id, state){
@@ -985,7 +1051,7 @@ function snapshotState(){
       description: i.type,
       action: 'تم تسجيل الحالة للمتابعة.'
     })),
-    checklistTemplates: [],
+    checklistTemplates,
     inventory: [],
     trainings: [],
     submissions: []
@@ -1001,12 +1067,13 @@ function restoreUiState(){
     tasks = saved.tasks || tasks;
     replaceArray(dailyReports, saved.dailyReports);
     replaceArray(incidents, saved.incidents);
+    replaceArray(checklistTemplates, saved.checklistTemplates || checklistTemplates);
     replaceArray(auditLogs, saved.auditLogs || auditLogs);
   }catch{}
 }
 
 function persistUiState(){
-  const saved = { facilities, staff, tasks, dailyReports, incidents, auditLogs };
+  const saved = { facilities, staff, tasks, dailyReports, incidents, checklistTemplates, auditLogs };
   localStorage.setItem(appStateKey, JSON.stringify(saved));
   if(supabaseMode){
     saveSupabaseState().catch(()=>showToast('تعذر حفظ التغييرات على السيرفر الأونلاين','error'));
@@ -1052,7 +1119,10 @@ async function handleLogin(e){
       setTimeout(()=>{initCharts();renderAll()},100);
       return;
     }catch(error){
-      showToast('تعذر الدخول الأونلاين، سيتم تجربة الوضع المحلي','error');
+      supabaseMode = false;
+      sessionStorage.removeItem(apiTokenKey);
+      showToast('اسم المستخدم أو كلمة المرور غير صحيحة','error');
+      return;
     }
   }
   try{
@@ -1120,7 +1190,7 @@ if(localStorage.getItem('theme'))document.documentElement.setAttribute('data-the
 // Render
 function renderAll(){
   updateStats();
-  renderFacilities();renderStaff();renderTasks();renderUrgent();renderDaily();renderIncidents();renderAudit();
+  renderFacilities();renderStaff();renderTasks();renderUrgent();renderDaily();renderIncidents();renderChecklists();renderAudit();
 }
 
 function updateStats(){
@@ -1150,7 +1220,52 @@ function renderFacilities(){
         <div class="facility-stat"><div class="num">${f.beds}</div><div class="lbl">سرير</div></div>
         <div class="facility-stat"><div class="num">${f.compliance}%</div><div class="lbl">التزام</div></div>
       </div>
+      <div class="card-actions">
+        <button class="btn btn-secondary btn-sm" onclick="editFacility('${f.id || f.name}')"><i class="fas fa-edit"></i> تعديل</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteFacility('${f.id || f.name}')"><i class="fas fa-trash"></i> حذف</button>
+        <button class="btn btn-primary btn-sm" onclick="openFacilityChecklist('${f.name}')"><i class="fas fa-clipboard-check"></i> القوائم</button>
+      </div>
     </div>`).join('');
+}
+
+function renderChecklists(){
+  const facilityFilter = document.getElementById('checklistFacilityFilter');
+  const departmentFilter = document.getElementById('checklistDepartmentFilter');
+  const facilitySelect = document.getElementById('checklistFacilitySelect');
+  if(facilityFilter){
+    const current = facilityFilter.value || 'all';
+    facilityFilter.innerHTML = `<option value="all">كل المنشآت</option>` + facilities.map(f=>`<option value="${f.name}">${f.name}</option>`).join('');
+    facilityFilter.value = [...facilityFilter.options].some(o=>o.value===current) ? current : 'all';
+  }
+  if(departmentFilter){
+    const departments = [...new Set(checklistTemplates.map(c=>c.department || 'عام'))];
+    const current = departmentFilter.value || 'all';
+    departmentFilter.innerHTML = `<option value="all">كل الاختصاصات</option>` + departments.map(d=>`<option value="${d}">${d}</option>`).join('');
+    departmentFilter.value = [...departmentFilter.options].some(o=>o.value===current) ? current : 'all';
+  }
+  if(facilitySelect){
+    facilitySelect.innerHTML = `<option value="كل المنشآت">كل المنشآت</option>` + facilities.map(f=>`<option value="${f.name}">${f.name}</option>`).join('');
+  }
+  const selectedFacility = facilityFilter?.value || 'all';
+  const selectedDepartment = departmentFilter?.value || 'all';
+  const visible = checklistTemplates.filter(c =>
+    (selectedFacility === 'all' || c.facility === selectedFacility || c.facility === 'كل المنشآت') &&
+    (selectedDepartment === 'all' || c.department === selectedDepartment)
+  );
+  const grid = document.getElementById('checklistsGrid');
+  if(!grid) return;
+  grid.innerHTML = visible.map(c=>`
+    <article class="checklist-card">
+      <h4>${c.title}</h4>
+      <div class="meta"><span>${c.facility}</span><span>${c.department}</span><span>${c.frequency}</span><span>${c.standard}</span></div>
+      <ol class="checklist-items">${(c.items || []).slice(0,6).map(item=>`<li>${item}</li>`).join('')}</ol>
+      <div class="card-actions">
+        <button class="btn btn-primary btn-sm" onclick="startChecklist('${c.id}')"><i class="fas fa-play"></i> بدء تحقق</button>
+        <button class="btn btn-secondary btn-sm" onclick="editChecklist('${c.id}')"><i class="fas fa-edit"></i> تعديل</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteChecklist('${c.id}')"><i class="fas fa-trash"></i> حذف</button>
+      </div>
+    </article>
+  `).join('') || `<div class="empty-state">لا توجد قوائم تحقق مطابقة.</div>`;
 }
 
 function renderStaff(){
@@ -1193,6 +1308,91 @@ function toggleTask(i){
   persistUiState();
   renderTasks();renderUrgent();
   showToast(tasks[i].done?'تم إنجاز المهمة':'تم إعادة فتح المهمة');
+}
+
+function findFacilityIndex(idOrName){
+  return facilities.findIndex(f => (f.id || f.name) === idOrName || f.name === idOrName);
+}
+
+function editFacility(idOrName){
+  const index = findFacilityIndex(idOrName);
+  if(index < 0) return;
+  const f = facilities[index];
+  const name = prompt('اسم المنشأة', f.name);
+  if(name === null) return;
+  const type = prompt('نوع المنشأة', f.type || 'مرفق صحي');
+  if(type === null) return;
+  const location = prompt('المدينة / المنطقة', f.location || '');
+  if(location === null) return;
+  const oldName = f.name;
+  facilities[index] = {...f, name:name.trim() || f.name, type:type.trim() || f.type, location:location.trim() || f.location, icon:(type || '').includes('مشفى') || (type || '').includes('مستشفى') ? 'hospital' : 'clinic-medical'};
+  checklistTemplates.forEach(c => { if(c.facility === oldName) c.facility = facilities[index].name; });
+  dailyReports.forEach(r => { if(r.facility === oldName) r.facility = facilities[index].name; });
+  incidents.forEach(i => { if(i.facility === oldName) i.facility = facilities[index].name; });
+  staff.forEach(s => { if(s.facility === oldName) s.facility = facilities[index].name; });
+  addAudit('تعديل منشأة صحية');
+  persistUiState();
+  renderAll();
+}
+
+function deleteFacility(idOrName){
+  const index = findFacilityIndex(idOrName);
+  if(index < 0) return;
+  const name = facilities[index].name;
+  if(!confirm(`حذف ${name}؟ سيتم حذف قوائم التحقق المرتبطة بها فقط.`)) return;
+  facilities.splice(index,1);
+  checklistTemplates = checklistTemplates.filter(c => c.facility !== name);
+  addAudit('حذف منشأة صحية');
+  persistUiState();
+  renderAll();
+}
+
+function openFacilityChecklist(facilityName){
+  showPage('checklists');
+  setTimeout(()=>{
+    const filter = document.getElementById('checklistFacilityFilter');
+    if(filter){ filter.value = facilityName; renderChecklists(); }
+  }, 50);
+}
+
+function startChecklist(id){
+  const c = checklistTemplates.find(item => item.id === id);
+  if(!c) return;
+  const scoreInput = prompt(`نتيجة ${c.title} من 100`, '90');
+  if(scoreInput === null) return;
+  const score = Math.max(0, Math.min(100, Number(scoreInput) || 0));
+  dailyReports.unshift({ id:'CHK-'+Date.now(), facility:c.facility, date:new Date().toISOString().slice(0,10), cases:0, compliance:score, status: score < 80 ? 'بحاجة لإجراء' : 'معتمد' });
+  addAudit('تنفيذ قائمة تحقق');
+  persistUiState();
+  renderAll();
+  showPage('daily');
+  showToast('تم حفظ نتيجة قائمة التحقق كتقرير يومي');
+}
+
+function editChecklist(id){
+  const index = checklistTemplates.findIndex(item => item.id === id);
+  if(index < 0) return;
+  const c = checklistTemplates[index];
+  const title = prompt('عنوان القائمة', c.title);
+  if(title === null) return;
+  const department = prompt('الاختصاص / القسم', c.department || 'عام');
+  if(department === null) return;
+  const items = prompt('البنود - افصل بين البنود بفاصلة', (c.items || []).join(', '));
+  if(items === null) return;
+  checklistTemplates[index] = {...c, title:title.trim() || c.title, department:department.trim() || c.department, items:items.split(',').map(x=>x.trim()).filter(Boolean)};
+  addAudit('تعديل قائمة تحقق');
+  persistUiState();
+  renderAll();
+}
+
+function deleteChecklist(id){
+  const index = checklistTemplates.findIndex(item => item.id === id);
+  if(index < 0) return;
+  if(!confirm('حذف قائمة التحقق؟')) return;
+  checklistTemplates.splice(index,1);
+  addAudit('حذف قائمة تحقق');
+  persistUiState();
+  renderAll();
 }
 
 function renderUrgent(){
@@ -1333,6 +1533,19 @@ function save(modal,msg){
     addAudit('إنشاء مهمة جديدة');
   }
 
+  if(modal === 'newChecklistModal'){
+    checklistTemplates.unshift({
+      id:'chk-'+Date.now(),
+      title:value(0) || 'قائمة تحقق جديدة',
+      facility:value(1) || 'كل المنشآت',
+      department:value(2) || 'عام',
+      frequency:value(3) || 'يومي',
+      standard:value(4) || 'WHO',
+      items:(value(5) || '').split('\n').map(item=>item.trim()).filter(Boolean)
+    });
+    addAudit('إضافة قائمة تحقق');
+  }
+
   if(modal === 'newReportModal'){
     dailyReports.unshift({
       id:'RPT-'+Date.now(),
@@ -1394,6 +1607,7 @@ function exportExcel(){
     XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(tasks),'المهام');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(dailyReports),'التقارير اليومية');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(incidents),'حالات العدوى');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(checklistTemplates.map(c=>({...c, items:(c.items||[]).join(' | ')}))),'قوائم التحقق');
     XLSX.writeFile(wb,'report-'+Date.now()+'.xlsx');
   },500);
 }
