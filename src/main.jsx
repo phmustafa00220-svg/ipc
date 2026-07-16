@@ -27,9 +27,201 @@ import {
 } from "lucide-react";
 import "./styles.css";
 
-const storageKey = "hihfad-ipc-suite-v2";
+const storageKey = "hihfad-ipc-suite-v4";
 const sessionKey = "hihfad-ipc-session-v2";
 const today = new Date().toISOString().slice(0, 10);
+
+const globalChecklistTemplates = [
+  {
+    id: "core-ipc",
+    title: "التقييم العام لضبط العدوى - كل الأقسام",
+    scope: "كل المنشآت",
+    frequency: "يومي",
+    category: "عام",
+    items: [
+      "وجود مسؤول واضح لضبط العدوى وخطة متابعة داخل القسم",
+      "توفر مواد نظافة اليدين عند نقاط الرعاية",
+      "التزام الكادر بنظافة اليدين قبل وبعد ملامسة المريض",
+      "توفر معدات الوقاية الشخصية واستخدامها حسب نوع الإجراء",
+      "فرز النفايات الطبية والحادة في حاويات مطابقة وموسومة",
+      "عدم امتلاء حاويات الأدوات الحادة فوق الحد الآمن",
+      "تنظيف وتطهير الأسطح عالية اللمس وفق جدول موثق",
+      "تعقيم أو تطهير المعدات المشتركة بين المرضى",
+      "تطبيق عزل مناسب عند الاشتباه بعدوى قابلة للانتقال",
+      "توثيق الحوادث والتعرض للوخز أو الرذاذ فوراً",
+    ],
+  },
+  {
+    id: "hand-hygiene-who",
+    title: "نظافة اليدين - لحظات WHO الخمس",
+    scope: "كل نقاط الرعاية",
+    frequency: "يومي",
+    category: "نظافة اليدين",
+    items: [
+      "توفر معقم كحولي أو مغسلة فعالة عند نقطة الرعاية",
+      "نظافة اليدين قبل ملامسة المريض",
+      "نظافة اليدين قبل الإجراء النظيف أو المعقم",
+      "نظافة اليدين بعد خطر التعرض لسوائل الجسم",
+      "نظافة اليدين بعد ملامسة المريض",
+      "نظافة اليدين بعد ملامسة محيط المريض",
+      "عدم ارتداء خواتم أو أظافر صناعية أثناء الرعاية",
+      "وجود ملاحظة مباشرة وتغذية راجعة للكادر",
+    ],
+  },
+  {
+    id: "emergency-triage",
+    title: "الإسعاف والفرز والعزل الأولي",
+    scope: "الإسعاف",
+    frequency: "يومي",
+    category: "الإسعاف",
+    items: [
+      "فرز المرضى ذوي الأعراض التنفسية أو الحمى عند الوصول",
+      "توفر كمامات ومطهر يد في نقطة الاستقبال",
+      "تطبيق مسار منفصل للحالات المشتبهة عند الحاجة",
+      "تنظيف الكراسي والأسطح بعد الحالات عالية الخطورة",
+      "تطهير النقالات والمعدات المشتركة بين المرضى",
+      "توثيق حالات التعرض المهني والإبلاغ عنها",
+      "توفر معدات الوقاية للعاملين في الفرز والإسعاف",
+      "فرز النفايات الحادة والمعدية بشكل فوري",
+    ],
+  },
+  {
+    id: "surgery-or",
+    title: "غرف العمليات والجراحة",
+    scope: "الجراحة والعمليات",
+    frequency: "يومي",
+    category: "الجراحة",
+    items: [
+      "تأكيد تعقيم الأدوات ومؤشرات التعقيم قبل الاستخدام",
+      "التزام الفريق بلباس العمليات ونظافة اليدين الجراحية",
+      "تنظيف وتطهير غرفة العمليات بين الحالات",
+      "توثيق تنظيف نهاية اليوم للغرفة والمعدات",
+      "فصل الأدوات النظيفة عن الملوثة أثناء النقل",
+      "التخلص الآمن من الأدوات الحادة داخل غرفة العمليات",
+      "التزام الفريق بفتح الأدوات المعقمة بطريقة آمنة",
+      "وجود سجل عدوى موضع العمل الجراحي ومراجعته",
+    ],
+  },
+  {
+    id: "icu-invasive-devices",
+    title: "العناية المشددة والأجهزة الغازية",
+    scope: "العناية",
+    frequency: "يومي",
+    category: "العناية",
+    items: [
+      "تطبيق نظافة اليدين قبل التعامل مع القثاطر والأنابيب",
+      "تقييم يومي للحاجة للقثاطر الوريدية والبولية",
+      "تطهير منافذ الحقن والوصلات قبل الاستخدام",
+      "رفع رأس السرير للمرضى على التهوية عند عدم وجود مانع",
+      "تنظيف أجهزة المراقبة والمضخات بين المرضى",
+      "التزام العزل التماسي أو التنفسي عند الحاجة",
+      "توثيق عدوى مرتبطة بالقثاطر أو التهوية ومراجعتها",
+      "توفر معدات وقاية مناسبة عند سرير المريض",
+    ],
+  },
+  {
+    id: "obs-gyn-global",
+    title: "النسائية والتوليد",
+    scope: "النسائية والتوليد",
+    frequency: "يومي",
+    category: "التوليد",
+    items: [
+      "تجهيز غرفة الولادة ونظافة الأسطح قبل كل حالة",
+      "توفر مستلزمات الولادة النظيفة والمعقمة",
+      "التخلص الآمن من المشيمة والنفايات الملوثة",
+      "تطهير الأسرة والطاولات بين الحالات",
+      "تطبيق احتياطات العزل عند الاشتباه بعدوى",
+      "توثيق التنظيف في نهاية الوردية",
+      "تطبيق احتياطات السلامة عند التعامل مع الدم وسوائل الجسم",
+      "توفر أدوات إنعاش الوليد نظيفة ومعقمة عند الحاجة",
+    ],
+  },
+  {
+    id: "pediatrics-neonatal",
+    title: "الأطفال والحواضن",
+    scope: "الأطفال والحواضن",
+    frequency: "يومي",
+    category: "الأطفال",
+    items: [
+      "تنظيف وتعقيم الحواضن حسب جدول موثق",
+      "نظافة اليدين قبل وبعد التعامل مع كل طفل",
+      "تخصيص أدوات لكل طفل قدر الإمكان",
+      "تنظيف معدات الرضاعة والتحضير بطريقة آمنة",
+      "عزل الأطفال المشتبه بعدوى معدية حسب الإمكانات",
+      "تطهير أجهزة المراقبة والمجسات بين الاستخدامات",
+      "فرز النفايات والحفاضات الملوثة بشكل آمن",
+      "متابعة مؤشرات العدوى المرتبطة بالرعاية في القسم",
+    ],
+  },
+  {
+    id: "cssd-sterilization",
+    title: "التعقيم المركزي وإعادة معالجة الأدوات",
+    scope: "التعقيم",
+    frequency: "يومي",
+    category: "التعقيم",
+    items: [
+      "فصل مسار الأدوات الملوثة عن النظيفة والمعقمة",
+      "ارتداء معدات الوقاية أثناء الغسل والتنظيف الأولي",
+      "تنظيف الأدوات قبل التعقيم وفحصها بصرياً",
+      "استخدام مؤشرات كيميائية أو بيولوجية حسب البروتوكول",
+      "توثيق كل دورة تعقيم مع التاريخ والحمولة والنتيجة",
+      "تخزين الأدوات المعقمة في مكان نظيف وجاف ومغلق",
+      "عدم استخدام رزم تالفة أو رطبة أو منتهية الصلاحية",
+      "وجود خطة صيانة ومعايرة لجهاز التعقيم",
+    ],
+  },
+  {
+    id: "environmental-cleaning",
+    title: "النظافة البيئية وتطهير الأسطح",
+    scope: "الخدمات والتنظيف",
+    frequency: "يومي",
+    category: "النظافة البيئية",
+    items: [
+      "وجود جدول تنظيف حسب خطورة المنطقة وتكرار الاستخدام",
+      "استخدام مطهر مناسب بتركيز وزمن تماس صحيحين",
+      "تنظيف الأسطح عالية اللمس أكثر من مرة يومياً",
+      "تغيير أدوات التنظيف أو تطهيرها بين المناطق",
+      "عدم خلط المنظفات والمطهرات بطريقة غير آمنة",
+      "توفر معدات وقاية للعاملين بالنظافة",
+      "توثيق أعمال التنظيف والمراجعة من المشرف",
+      "وجود آلية تدقيق وملاحظات لتحسين الأداء",
+    ],
+  },
+  {
+    id: "waste-sharps",
+    title: "النفايات الطبية والأدوات الحادة",
+    scope: "كل الأقسام",
+    frequency: "يومي",
+    category: "النفايات",
+    items: [
+      "توفر حاويات حادة مقاومة للثقب قرب نقطة الاستخدام",
+      "عدم إعادة تغطية الإبر بعد الاستخدام",
+      "عدم امتلاء حاويات الحادة فوق ثلاثة أرباعها",
+      "فرز النفايات المعدية والعامة حسب نظام الألوان المعتمد",
+      "نقل النفايات بمسار ووقت آمنين",
+      "تنظيف منطقة تجميع النفايات ومنع الوصول غير المصرح",
+      "توفر معدات وقاية للعاملين بجمع النفايات",
+      "توثيق حوادث الوخز والإجراءات المتخذة",
+    ],
+  },
+  {
+    id: "laboratory-safety",
+    title: "المخبر وسلامة العينات",
+    scope: "المخبر",
+    frequency: "يومي",
+    category: "المخبر",
+    items: [
+      "استلام العينات بعبوات محكمة وموسومة",
+      "ارتداء القفازات والواقي العيني عند خطر الرذاذ",
+      "التعامل مع الانسكابات وفق إجراء مكتوب",
+      "تطهير أسطح العمل قبل وبعد الوردية",
+      "التخلص من العينات والنفايات المخبرية بأمان",
+      "توثيق التعرضات والحوادث المخبرية",
+      "توفر مغسلة أو معقم يد داخل منطقة العمل",
+      "منع الأكل والشرب وتخزين الطعام في منطقة المخبر",
+    ],
+  },
+];
 
 const roles = {
   ADMIN: "مدير النظام",
@@ -123,7 +315,7 @@ const defaultData = {
       description: "توثيق جاهزية مستلزمات الوقاية والتخلص من النفايات.",
     },
   ],
-  checklistTemplates: [
+  checklistTemplates: globalChecklistTemplates.concat([
     {
       id: "daily-ipc",
       title: "قائمة تحقق ضبط العدوى اليومية",
@@ -154,7 +346,7 @@ const defaultData = {
         "توثيق التنظيف في نهاية الوردية",
       ],
     },
-  ],
+  ]),
   reports: [
     {
       id: "r1",
@@ -334,6 +526,10 @@ function App() {
     setInstallPrompt(null);
   }
 
+  function generateReportPdf(report) {
+    exportReportPdf(report, data, getUser(data, report.authorId)?.name || "غير معروف");
+  }
+
   if (!user) return <Login data={data} onLogin={login} />;
 
   const canSee = new Set(permissions[user.role] || []);
@@ -402,7 +598,7 @@ function App() {
           {safeView === "tasks" && <Tasks data={data} user={user} tasks={visibleTasks} addTask={addTask} updateTaskStatus={updateTaskStatus} />}
           {safeView === "daily" && <DailyReport data={data} user={user} addReport={addReport} />}
           {safeView === "checklists" && <Checklists data={data} user={user} addTemplate={addTemplate} addSubmission={addSubmission} />}
-          {safeView === "reports" && <Reports data={data} reports={visibleReports} query={query} setQuery={setQuery} facilityFilter={facilityFilter} setFacilityFilter={setFacilityFilter} updateReportStatus={updateReportStatus} />}
+          {safeView === "reports" && <Reports data={data} reports={visibleReports} query={query} setQuery={setQuery} facilityFilter={facilityFilter} setFacilityFilter={setFacilityFilter} updateReportStatus={updateReportStatus} generateReportPdf={generateReportPdf} />}
           {safeView === "facilities" && <Facilities data={data} addFacility={addFacility} />}
           {safeView === "users" && <UsersPanel data={data} user={user} addUser={addUser} />}
           {safeView === "settings" && <SettingsPanel data={data} user={user} />}
@@ -573,7 +769,7 @@ function Checklists({ data, user, addTemplate, addSubmission }) {
   );
 }
 
-function Reports({ data, reports, query, setQuery, facilityFilter, setFacilityFilter, updateReportStatus }) {
+function Reports({ data, reports, query, setQuery, facilityFilter, setFacilityFilter, updateReportStatus, generateReportPdf }) {
   return (
     <section className="panel">
       <div className="filters-row compact">
@@ -582,14 +778,14 @@ function Reports({ data, reports, query, setQuery, facilityFilter, setFacilityFi
         <button className="secondary-button" onClick={() => exportReports(reports, data)}><FileText size={18} /> تصدير CSV</button>
         <button className="secondary-button" onClick={() => window.print()}><ClipboardCheck size={18} /> طباعة</button>
       </div>
-      <ReportList reports={reports} data={data} updateReportStatus={updateReportStatus} />
+      <ReportList reports={reports} data={data} updateReportStatus={updateReportStatus} generateReportPdf={generateReportPdf} />
     </section>
   );
 }
 
-function ReportList({ reports, data, updateReportStatus }) {
+function ReportList({ reports, data, updateReportStatus, generateReportPdf }) {
   if (!reports.length) return <div className="empty-state"><CheckCircle2 size={28} /> لا توجد تقارير مطابقة حالياً.</div>;
-  return <div className="report-list">{reports.map((report) => <article className="report-card" key={report.id}><div className="report-main"><div className={`priority-dot priority-${report.priority}`} /><div><h3>{report.title}</h3><p>{facilityName(data, report.facilityId)} - {report.department} - {getUser(data, report.authorId)?.name || "غير معروف"}</p><p className="report-note">{report.notes}</p><small>{report.actions}</small></div></div><div className="report-side"><span className={`status-pill status-${report.status}`}>{report.status}</span><strong>{report.score}%</strong><small>{report.date}</small>{updateReportStatus && <select value={report.status} onChange={(event) => updateReportStatus(report.id, event.target.value)}><option>جديد</option><option>قيد المتابعة</option><option>طارئ</option><option>مغلق</option></select>}</div></article>)}</div>;
+  return <div className="report-list">{reports.map((report) => <article className="report-card" key={report.id}><div className="report-main"><div className={`priority-dot priority-${report.priority}`} /><div><h3>{report.title}</h3><p>{facilityName(data, report.facilityId)} - {report.department} - {getUser(data, report.authorId)?.name || "غير معروف"}</p><p className="report-note">{report.notes}</p><small>{report.actions}</small></div></div><div className="report-side"><span className={`status-pill status-${report.status}`}>{report.status}</span><strong>{report.score}%</strong><small>{report.date}</small>{updateReportStatus && <select value={report.status} onChange={(event) => updateReportStatus(report.id, event.target.value)}><option>جديد</option><option>قيد المتابعة</option><option>طارئ</option><option>مغلق</option></select>}{generateReportPdf && <button className="secondary-button compact-button" onClick={() => generateReportPdf(report)}>PDF</button>}</div></article>)}</div>;
 }
 
 function Facilities({ data, addFacility }) {
@@ -655,6 +851,69 @@ function exportReports(reports, data) {
   link.download = `ipc-reports-${today}.csv`;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+async function exportReportPdf(report, data, author) {
+  const { default: html2canvas } = await import("html2canvas");
+  const { jsPDF } = await import("jspdf");
+  const wrapper = document.createElement("div");
+  wrapper.className = "pdf-page";
+  wrapper.dir = "rtl";
+  wrapper.innerHTML = `
+    <div class="pdf-watermark">HIHFAD</div>
+    <header class="pdf-header">
+      <img src="/ipc/hihfad-logo.jpg" alt="HIHFAD" />
+      <div>
+        <h1>تقرير ضبط العدوى</h1>
+        <p>${data.organization}</p>
+      </div>
+      <strong>${report.date}</strong>
+    </header>
+    <div class="pdf-meta">
+      <div><span>المنشأة</span><strong>${facilityName(data, report.facilityId)}</strong></div>
+      <div><span>القسم</span><strong>${report.department}</strong></div>
+      <div><span>نوع التقرير</span><strong>${report.type}</strong></div>
+      <div><span>الأولوية</span><strong>${report.priority}</strong></div>
+      <div><span>الحالة</span><strong>${report.status}</strong></div>
+      <div><span>مقياس الالتزام</span><strong>${report.score}%</strong></div>
+    </div>
+    <section class="pdf-section">
+      <h2>${report.title}</h2>
+      <h3>الملاحظات والنتائج</h3>
+      <p>${report.notes}</p>
+      <h3>الإجراءات التصحيحية المطلوبة</h3>
+      <p>${report.actions || "لا يوجد"}</p>
+    </section>
+    <section class="pdf-score">
+      <span>مؤشر الالتزام</span>
+      <div><i style="width:${Math.max(0, Math.min(100, report.score))}%"></i></div>
+      <strong>${report.score}%</strong>
+    </section>
+    <footer class="pdf-footer">
+      <span>أعد التقرير: ${author}</span>
+      <span>تم التصدير من نظام HIHFAD IPC Control</span>
+    </footer>
+  `;
+  document.body.appendChild(wrapper);
+  const canvas = await html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+  const imgData = canvas.toDataURL("image/png");
+  const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const imgWidth = pageWidth;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  let heightLeft = imgHeight;
+  let position = 0;
+  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+  heightLeft -= pageHeight;
+  while (heightLeft > 0) {
+    position = heightLeft - imgHeight;
+    pdf.addPage();
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+  }
+  pdf.save(`IPC-${report.date}-${report.id}.pdf`);
+  wrapper.remove();
 }
 
 createRoot(document.getElementById("root")).render(<App />);
