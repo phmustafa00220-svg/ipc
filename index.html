@@ -984,9 +984,10 @@ async function handleLogin(e){
   const r=document.getElementById('role').value;
   if(!u||!r){showToast('يرجى ملء جميع الحقول','error');return}
   const client = getSupabaseClient();
-  if(client && u.includes('@')){
+  const loginEmail = u.includes('@') ? u : `${u}@hihfad.local`;
+  if(client){
     try{
-      const { data, error } = await client.auth.signInWithPassword({ email:u, password:p });
+      const { data, error } = await client.auth.signInWithPassword({ email:loginEmail, password:p });
       if(error) throw error;
       const onlineState = await loadSupabaseState();
       mapServerState(onlineState);
