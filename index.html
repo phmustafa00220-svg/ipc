@@ -291,6 +291,15 @@ tbody tr:hover{background:var(--bg)}
 .log-content{flex:1}
 .log-title{font-weight:600;font-size:14px;color:var(--text);margin-bottom:4px}
 .log-meta{font-size:12px;color:var(--text2)}
+.assessment-panel{display:none;margin-top:18px;border:1px solid var(--border);border-radius:18px;background:var(--card);box-shadow:var(--shadow);overflow:hidden}
+.assessment-panel.active{display:block}
+.assessment-head{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;padding:18px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,rgba(43,189,184,.12),rgba(59,130,246,.08))}
+.assessment-title h3{font-size:20px;margin-bottom:8px}.assessment-title p{color:var(--text2);font-size:13px;line-height:1.7}
+.assessment-body{padding:18px}.assessment-row{display:grid;grid-template-columns:1fr 220px 1fr;gap:12px;align-items:start;padding:12px;border:1px solid var(--border);border-radius:12px;margin-bottom:10px;background:var(--bg)}
+.assessment-row .item-text{font-weight:700;line-height:1.7}.assessment-row select,.assessment-row input{width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-family:inherit}
+.assessment-score{display:flex;gap:12px;align-items:center;justify-content:flex-end}.score-pill{min-width:84px;text-align:center;padding:10px;border-radius:12px;background:var(--gradient-p);color:white;font-weight:800}
+.library-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}.library-summary .mini{padding:14px;border-radius:14px;background:var(--bg);border:1px solid var(--border)}.library-summary .mini strong{display:block;font-size:20px}
+@media(max-width:800px){.assessment-head,.assessment-row{grid-template-columns:1fr}.assessment-score{justify-content:stretch}.score-pill{flex:1}}
 </style>
 </head>
 <body>
@@ -547,6 +556,7 @@ tbody tr:hover{background:var(--bg)}
           </div>
         </div>
         <div class="checklist-grid" id="checklistsGrid"></div>
+        <div class="assessment-panel" id="assessmentPanel"></div>
       </div>
 
       <!-- Weekly -->
@@ -847,6 +857,12 @@ const ipcSpecialties = [
   'عام','الإدارة','الإسعاف','الفرز','العيادات','التمريض','غرف العمليات','الجراحة','العناية المركزة','النسائية والتوليد','الأطفال والحواضن','المختبر','الأشعة','الأسنان','التعقيم المركزي','غسيل الكلى','الصيدلية','النفايات الطبية','النظافة والتطهير','العزل','التغذية والمطبخ','المغسلة'
 ];
 
+const facilitySpecialtyProfiles = {
+  hospital:['عام','الإدارة','الإسعاف','الفرز','العيادات','التمريض','غرف العمليات','الجراحة','العناية المركزة','النسائية والتوليد','الأطفال والحواضن','المختبر','الأشعة','الأسنان','التعقيم المركزي','غسيل الكلى','الصيدلية','النفايات الطبية','النظافة والتطهير','العزل','التغذية والمطبخ','المغسلة'],
+  primary:['عام','الإدارة','الإسعاف','الفرز','العيادات','التمريض','النسائية والتوليد','الأطفال والحواضن','المختبر','الأسنان','الصيدلية','النفايات الطبية','النظافة والتطهير','العزل'],
+  clinic:['عام','الإدارة','العيادات','التمريض','الأسنان','الصيدلية','النفايات الطبية','النظافة والتطهير']
+};
+
 const reportCatalog = [
   { id:'rep-daily-ipc', title:'التقرير اليومي لضبط العدوى', frequency:'يومي', specialty:'عام' },
   { id:'rep-hand-hygiene', title:'رصد نظافة اليدين', frequency:'يومي', specialty:'التمريض' },
@@ -856,6 +872,61 @@ const reportCatalog = [
   { id:'rep-isolation', title:'تقرير غرف العزل والاحتياطات القياسية', frequency:'يومي', specialty:'العزل' },
   { id:'rep-maternity', title:'تقرير الولادة النظيفة والنسائية', frequency:'يومي', specialty:'النسائية والتوليد' },
   { id:'rep-lab', title:'سلامة المختبر والتعامل مع العينات', frequency:'أسبوعي', specialty:'المختبر' }
+];
+
+const ipcLibraryTemplates = [
+  {
+    id:'lib-ipcaf-program', title:'IPCAF - برنامج ضبط العدوى المؤسسي', facility:'كل المنشآت', department:'عام', frequency:'شهري', standard:'WHO IPCAF',
+    items:['وجود مسؤول/فريق IPC محدد ومكلف رسمياً','وجود لجنة IPC متعددة الاختصاصات وتجتمع دورياً','خطة IPC سنوية مع مؤشرات قابلة للقياس','ميزانية أو موارد واضحة لأنشطة IPC','سياسات مكتوبة ومحدثة ومعلنة للأقسام','ربط IPC مع الجودة وسلامة المرضى والترصد','مراجعة مؤشرات العدوى والالتزام شهرياً','توثيق قرارات اللجنة والإجراءات التصحيحية','تحديد مسؤوليات IPC في الوصف الوظيفي','وجود آلية تصعيد للمخاطر العالية خلال 24 ساعة']
+  },
+  {
+    id:'lib-hand-hygiene', title:'نظافة اليدين ونقاط الرعاية', facility:'كل المنشآت', department:'التمريض', frequency:'يومي', standard:'WHO 5 Moments / CDC ICAR',
+    items:['توفر محلول كحولي عند نقطة الرعاية','توفر ماء وصابون ومناشف أحادية الاستخدام','التزام العاملين قبل لمس المريض','التزام العاملين قبل إجراء نظيف/معقم','التزام العاملين بعد خطر التعرض لسوائل الجسم','التزام العاملين بعد لمس المريض','التزام العاملين بعد لمس محيط المريض','عدم ارتداء خواتم أو أظافر صناعية في الرعاية','تدريب العاملين على الخطوات الصحيحة','وجود رصد مباشر وتغذية راجعة للالتزام','عدم إعادة تعبئة عبوات الكحول بطريقة غير آمنة','توفر ملصقات تذكيرية واضحة']
+  },
+  {
+    id:'lib-ppe-isolation', title:'الاحتياطات القياسية والعزل', facility:'كل المنشآت', department:'العزل', frequency:'يومي', standard:'WHO/CDC Standard & Transmission-based Precautions',
+    items:['توفر قفازات وكمامات ومراييل وواقي عين حسب الخطر','اختيار معدات الوقاية حسب نوع الإجراء','خلع معدات الوقاية دون تلويث ذاتي','وجود منطقة ارتداء وخلع واضحة للعزل','تعريف حالات العزل والتنبيه على باب الغرفة','تخصيص أدوات للمريض المعزول أو تطهيرها بين الاستخدام','تطبيق احتياطات الرذاذ/الهواء/التماس حسب الحالة','تدريب العاملين على التسلسل الصحيح للارتداء والخلع','التخلص من PPE في حاويات مناسبة','تنظيف غرفة العزل وفق جدول موثق','تقييد حركة المريض المعزول عند الحاجة','توثيق مخالطات الحالات المعدية']
+  },
+  {
+    id:'lib-surgery-or', title:'غرف العمليات والجراحة الآمنة', facility:'كل المنشآت', department:'غرف العمليات', frequency:'يومي', standard:'WHO Surgical Safety / CDC',
+    items:['تطبيق نظافة اليدين الجراحية قبل كل عملية','تعقيم الأدوات والتحقق من مؤشرات التعقيم','فصل المسار النظيف عن الملوث في العمليات','تنظيف غرفة العمليات بين الحالات','تنظيف نهائي يومي لغرف العمليات','ضبط حركة الأشخاص داخل غرفة العمليات','استخدام مضاد حيوي وقائي وفق البروتوكول عند الحاجة','تحضير الجلد بمطهر مناسب ووقت تماس كاف','سلامة تخزين الأدوات المعقمة','توثيق رقم دورة التعقيم على ملف العملية','التعامل الآمن مع الأدوات الحادة','ترصد عدوى موضع العمل الجراحي بعد العملية']
+  },
+  {
+    id:'lib-obgyn-delivery', title:'النسائية والتوليد والولادة النظيفة', facility:'كل المنشآت', department:'النسائية والتوليد', frequency:'يومي', standard:'WHO Clean Birth',
+    items:['تجهيز غرفة الولادة قبل كل حالة','توفر أدوات ولادة نظيفة/معقمة','غسل اليدين وارتداء قفازات معقمة عند الولادة','تطهير سطح الولادة بين الحالات','التخلص الآمن من المشيمة والنفايات الملوثة','تطبيق احتياطات النزف وسوائل الجسم','تنظيف أدوات الفحص النسائي وتعقيمها','فصل الحالات المشتبهة بعدوى عند الإمكان','توفير مستلزمات إنعاش الوليد النظيفة','توثيق أي حمى نفاس أو عدوى جرح قيصري','إدارة آمنة للإبر والخياطة','تنظيف وتطهير أسرة المراقبة']
+  },
+  {
+    id:'lib-sterilization-cssd', title:'التعقيم المركزي CSSD', facility:'كل المنشآت', department:'التعقيم المركزي', frequency:'يومي', standard:'CDC Sterilization / WHO',
+    items:['فصل منطقة الاستلام الملوثة عن التغليف والتخزين','تنظيف ميكانيكي/يدوي موثق قبل التعقيم','استخدام PPE في منطقة الغسيل','فحص الأدوات قبل التغليف','تغليف الأدوات بطريقة تحافظ على التعقيم','استخدام مؤشرات كيميائية لكل عبوة','استخدام مؤشرات بيولوجية حسب نوع الجهاز والجدول','توثيق كل دورة تعقيم ونتيجتها','عدم استخدام عبوات مبللة أو ممزقة','تخزين المعقمات في مكان نظيف وجاف ومغلق','تتبع الأدوات للمرضى أو الأقسام','خطة للتعامل مع فشل دورة التعقيم']
+  },
+  {
+    id:'lib-lab-biosafety', title:'المختبر والسلامة الحيوية', facility:'كل المنشآت', department:'المختبر', frequency:'أسبوعي', standard:'WHO Biosafety / CDC',
+    items:['استلام العينات في عبوات محكمة وموسومة','توفر PPE مناسب للعاملين بالمختبر','منع الأكل والشرب وحفظ الطعام داخل المختبر','استخدام خزانة أمان حيوي عند الإجراءات المولدة للرذاذ','تطهير أسطح العمل بداية ونهاية الدوام وبعد الانسكاب','إجراء واضح للتعامل مع الانسكابات الحيوية','فرز النفايات المخبرية والحادة بشكل آمن','نقل العينات داخل المنشأة بحاويات ثانوية','توثيق التعرض المهني والوخزات','توفر لقاحات العاملين حسب السياسة','صيانة الأجهزة والثلاجات ومراقبة الحرارة','تدريب العاملين على السلامة الحيوية']
+  },
+  {
+    id:'lib-waste-sharps', title:'النفايات الطبية والأدوات الحادة', facility:'كل المنشآت', department:'النفايات الطبية', frequency:'يومي', standard:'WHO Health-care Waste',
+    items:['توفر حاويات حادة مقاومة للثقب في نقاط الاستخدام','عدم امتلاء حاويات الحادة أكثر من ثلاثة أرباعها','فرز النفايات المعدية والعادية والحادة بالألوان/الوسم','عدم إعادة تغطية الإبر بعد الاستخدام','نقل النفايات بمسار وزمن محددين','تخزين مؤقت آمن بعيداً عن المرضى والزوار','توفر PPE للعاملين بالنفايات','تنظيف عربات النفايات دورياً','توثيق الكميات أو مرات النقل','وجود خطة لانسكاب النفايات المعدية','تدريب عمال النظافة والنفايات','التخلص النهائي حسب المتطلبات المحلية']
+  },
+  {
+    id:'lib-evs-cleaning', title:'النظافة والتطهير البيئي', facility:'كل المنشآت', department:'النظافة والتطهير', frequency:'يومي', standard:'CDC Environmental Cleaning',
+    items:['خطة تنظيف مكتوبة حسب المنطقة ومستوى الخطورة','تحضير المطهر بالتركيز الصحيح ووسمه','تنظيف الأسطح عالية اللمس عدة مرات يومياً','تنظيف من النظيف إلى الملوث ومن الأعلى للأسفل','تغيير القماش/الممسحة بين المناطق عند الحاجة','توثيق التنظيف في سجل القسم','تدريب عمال النظافة على IPC وPPE','تنظيف معدات الرعاية المشتركة بين المرضى','تنظيف نهائي بعد خروج مريض العزل','تخزين مواد التنظيف بأمان','عدم خلط المطهرات كيميائياً','مراقبة جودة التنظيف بتدقيق دوري']
+  },
+  {
+    id:'lib-wash-water', title:'WASH والمياه والصرف الصحي', facility:'كل المنشآت', department:'WASH', frequency:'أسبوعي', standard:'WHO WASH FIT',
+    items:['توفر مياه آمنة بكميات كافية طوال وقت الخدمة','نقاط غسل يدين عاملة في أماكن الرعاية والمراحيض','توفر صابون أو كحول في نقاط غسل اليدين','مراحيض نظيفة ومنفصلة وآمنة للمرضى والعاملين','إدارة مياه الصرف دون تسرب أو رجوع','تنظيف خزانات المياه وفق جدول','مراقبة الكلور/جودة المياه عند الحاجة','توفر خطة طوارئ لانقطاع المياه','تصريف آمن للسوائل الملوثة','توفر مستلزمات تنظيف مستمرة','إبلاغ فوري عن أعطال المياه والصرف','ربط مخاطر WASH بخطة IPC']
+  },
+  {
+    id:'lib-dialysis', title:'غسيل الكلى', facility:'كل المنشآت', department:'غسيل الكلى', frequency:'يومي', standard:'CDC Dialysis IPC',
+    items:['نظافة اليدين قبل وبعد التعامل مع منفذ الوعاء','تطهير كرسي وجهاز الغسيل بين المرضى','تحضير الأدوية في منطقة نظيفة منفصلة','عدم مشاركة المستلزمات بين المرضى دون تطهير','فرز مرضى التهاب الكبد حسب السياسة المحلية','تعقيم وصلات وخطوط الدم وفق البروتوكول','التخلص من الإبر وخطوط الدم فوراً بأمان','مراقبة جودة المياه الخاصة بالغسيل','توثيق حوادث التعرض للدم','تدريب العاملين على منع عدوى مجرى الدم','استخدام PPE عند خطر الرش','رصد حمى أو علامات عدوى بعد الجلسة']
+  },
+  {
+    id:'lib-pharmacy-medication', title:'الصيدلية وتحضير الأدوية', facility:'كل المنشآت', department:'الصيدلية', frequency:'أسبوعي', standard:'Medication Safety / IPC',
+    items:['نظافة منطقة تحضير الأدوية وخلوها من التلوث','عدم استخدام عبوة متعددة الجرعات لأكثر من مريض إلا حسب السياسة','وسم تاريخ فتح العبوات متعددة الجرعات','حفظ الأدوية بدرجات حرارة مراقبة وموثقة','فصل الأدوية منتهية الصلاحية أو التالفة','تحضير الحقن في منطقة نظيفة وبأدوات معقمة','عدم إعادة إدخال إبرة مستخدمة في عبوة دواء','توفر حاوية حادة قرب منطقة التحضير','تنظيف ثلاجات الأدوية دورياً','سياسة واضحة للمضادات الحيوية ومراقبتها','توثيق حوادث الدواء المرتبطة بالعدوى','تدريب العاملين على الحقن الآمن']
+  },
+  {
+    id:'lib-dental', title:'عيادة الأسنان', facility:'كل المنشآت', department:'الأسنان', frequency:'يومي', standard:'CDC Dental IPC',
+    items:['تعقيم أدوات الأسنان الحرجة بعد كل مريض','تطهير الأسطح السنية عالية اللمس بين المرضى','استخدام حواجز واقية عند الحاجة','نظافة اليدين قبل وبعد القفازات','إدارة آمنة للأدوات الحادة والإبر','تنظيف خطوط المياه السنية وفق البروتوكول','استخدام PPE مناسب للرذاذ','فصل الأدوات النظيفة عن الملوثة','توثيق دورات التعقيم والمؤشرات','التخلص الآمن من الشاش والمواد الملوثة','فرز المرضى ذوي الأعراض التنفسية','تدريب الفريق على التعرض المهني']
+  }
 ];
 
 if('serviceWorker' in navigator){
@@ -1297,6 +1368,65 @@ function renderChecklists(){
   `).join('') || `<div class="empty-state">لا توجد قوائم تحقق مطابقة.</div>`;
 }
 
+function seedIpcChecklistLibrary(){
+  const existing = new Set(checklistTemplates.map(c=>c.id));
+  ipcLibraryTemplates.forEach(template => {
+    if(!existing.has(template.id)) checklistTemplates.push({...template, items:[...template.items]});
+  });
+}
+
+function renderChecklists(){
+  seedIpcChecklistLibrary();
+  const facilityFilter = document.getElementById('checklistFacilityFilter');
+  const departmentFilter = document.getElementById('checklistDepartmentFilter');
+  const facilitySelect = document.getElementById('checklistFacilitySelect');
+  if(facilityFilter){
+    const current = facilityFilter.value || 'all';
+    facilityFilter.innerHTML = `<option value="all">كل المنشآت</option>` + facilities.map(f=>`<option value="${f.name}">${f.name}</option>`).join('');
+    facilityFilter.value = [...facilityFilter.options].some(o=>o.value===current) ? current : 'all';
+  }
+  if(departmentFilter){
+    const departments = [...new Set(checklistTemplates.map(c=>c.department || 'عام'))].sort();
+    const current = departmentFilter.value || 'all';
+    departmentFilter.innerHTML = `<option value="all">كل الاختصاصات</option>` + departments.map(d=>`<option value="${d}">${d}</option>`).join('');
+    departmentFilter.value = [...departmentFilter.options].some(o=>o.value===current) ? current : 'all';
+  }
+  if(facilitySelect){
+    facilitySelect.innerHTML = `<option value="كل المنشآت">كل المنشآت</option>` + facilities.map(f=>`<option value="${f.name}">${f.name}</option>`).join('');
+  }
+  const selectedFacility = facilityFilter?.value || 'all';
+  const selectedDepartment = departmentFilter?.value || 'all';
+  const visible = checklistTemplates.filter(c =>
+    (selectedFacility === 'all' || c.facility === selectedFacility || c.facility === 'كل المنشآت' || c.facility === 'ظƒظ„ ط§ظ„ظ…ظ†ط´ط¢طھ') &&
+    (selectedDepartment === 'all' || c.department === selectedDepartment)
+  );
+  const grid = document.getElementById('checklistsGrid');
+  if(!grid) return;
+  const totalItems = checklistTemplates.reduce((sum,c)=>sum+(c.items || []).length,0);
+  grid.innerHTML = `
+    <div class="card" style="grid-column:1/-1">
+      <div class="library-summary">
+        <div class="mini"><strong>${checklistTemplates.length}</strong><span>قائمة تحقق معيارية</span></div>
+        <div class="mini"><strong>${totalItems}</strong><span>بند تحقق قابل للتعبئة</span></div>
+        <div class="mini"><strong>${new Set(checklistTemplates.map(c=>c.department)).size}</strong><span>اختصاص/قسم</span></div>
+        <div class="mini"><strong>WHO / CDC</strong><span>مرجع تشغيل أساسي</span></div>
+      </div>
+      <div style="color:var(--text2);line-height:1.8">اختر منشأة واختصاصاً ثم ابدأ نموذج التحقق. كل بند يتحول إلى استبيان إلكتروني بنتيجة وملاحظة وإجراء تصحيحي، ثم يرسل كتقرير بانتظار اعتماد المدير.</div>
+    </div>
+  ` + (visible.map(c=>`
+    <article class="checklist-card">
+      <h4>${c.title}</h4>
+      <div class="meta"><span>${c.facility}</span><span>${c.department}</span><span>${c.frequency}</span><span>${c.standard}</span><span>${(c.items || []).length} بند</span></div>
+      <ol class="checklist-items">${(c.items || []).slice(0,8).map(item=>`<li>${item}</li>`).join('')}</ol>
+      <div class="card-actions">
+        <button class="btn btn-primary btn-sm" onclick="startChecklist('${c.id}')"><i class="fas fa-clipboard-check"></i> تعبئة إلكترونية</button>
+        <button class="btn btn-secondary btn-sm" onclick="editChecklist('${c.id}')"><i class="fas fa-edit"></i> تعديل</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteChecklist('${c.id}')"><i class="fas fa-trash"></i> حذف</button>
+      </div>
+    </article>
+  `).join('') || `<div class="empty-state">لا توجد قوائم تحقق مطابقة.</div>`);
+}
+
 function renderStaff(){
   document.getElementById('staffTable').innerHTML=staff.map(s=>`
     <tr>
@@ -1336,6 +1466,24 @@ function userFacilities(user){
   if(Array.isArray(user.facilities) && user.facilities.length) return user.facilities;
   if(user.facility) return [user.facility];
   return ['كل المنشآت'];
+}
+
+function specialtiesForFacility(facilityName){
+  const facility = facilities.find(f => f.name === facilityName);
+  const type = (facility?.type || '').toLowerCase();
+  if(type.includes('مستشفى') || type.includes('مشفى') || type.includes('hospital')) return facilitySpecialtyProfiles.hospital;
+  if(type.includes('مركز') || type.includes('primary') || type.includes('صحي')) return facilitySpecialtyProfiles.primary;
+  if(type.includes('مستوصف') || type.includes('clinic')) return facilitySpecialtyProfiles.clinic;
+  return ipcSpecialties;
+}
+
+function renderAssessmentUnitOptions(selected){
+  const facility = document.getElementById('assessmentFacility')?.value;
+  const unit = document.getElementById('assessmentUnit');
+  if(!unit) return;
+  const options = specialtiesForFacility(facility);
+  unit.innerHTML = options.map(s=>`<option value="${s}" ${s===selected?'selected':''}>${s}</option>`).join('');
+  if(!options.includes(unit.value)) unit.value = options.includes(selected) ? selected : options[0];
 }
 
 function renderUsers(){
@@ -1483,6 +1631,106 @@ function deleteChecklist(id){
   addAudit('حذف قائمة تحقق');
   persistUiState();
   renderAll();
+}
+
+function startChecklist(id){
+  seedIpcChecklistLibrary();
+  const template = checklistTemplates.find(item => item.id === id);
+  const panel = document.getElementById('assessmentPanel');
+  if(!template || !panel) return;
+  const selectedFacility = document.getElementById('checklistFacilityFilter')?.value;
+  const facilityOptions = facilities.map(f=>`<option value="${f.name}" ${selectedFacility===f.name?'selected':''}>${f.name}</option>`).join('');
+  const initialFacility = selectedFacility && selectedFacility !== 'all' ? selectedFacility : facilities[0]?.name;
+  const unitOptions = specialtiesForFacility(initialFacility).map(s=>`<option value="${s}" ${s===template.department?'selected':''}>${s}</option>`).join('');
+  panel.classList.add('active');
+  panel.innerHTML = `
+    <div class="assessment-head">
+      <div class="assessment-title">
+        <h3>${template.title}</h3>
+        <p>${template.standard} | ${template.department} | ${template.frequency} | ${template.items.length} بند تحقق</p>
+      </div>
+      <div>
+        <div class="form-row">
+          <div class="form-group"><label>المنشأة</label><select id="assessmentFacility" onchange="renderAssessmentUnitOptions('${template.department}')">${facilityOptions}</select></div>
+          <div class="form-group"><label>القسم/الوحدة</label><select id="assessmentUnit">${unitOptions}</select></div>
+        </div>
+      </div>
+    </div>
+    <div class="assessment-body">
+      <div class="assessment-score">
+        <div class="score-pill" id="assessmentScore">0%</div>
+        <button class="btn btn-secondary" onclick="calculateAssessmentScore()"><i class="fas fa-calculator"></i> حساب النتيجة</button>
+        <button class="btn btn-primary" onclick="submitChecklistAssessment('${template.id}')"><i class="fas fa-paper-plane"></i> إرسال للمدير</button>
+      </div>
+      <div style="margin:14px 0;color:var(--text2)">التقييم: نعم = 2، جزئي = 1، لا = 0، غير منطبق لا يدخل في الحساب.</div>
+      ${template.items.map((item,index)=>`
+        <div class="assessment-row" data-row="${index}">
+          <div class="item-text">${index+1}. ${item}</div>
+          <select class="assessment-answer" onchange="calculateAssessmentScore()">
+            <option value="">اختر التقييم</option>
+            <option value="2">نعم / مطبق</option>
+            <option value="1">جزئي</option>
+            <option value="0">لا / غير مطبق</option>
+            <option value="na">غير منطبق</option>
+          </select>
+          <input class="assessment-note" type="text" placeholder="ملاحظة أو إجراء تصحيحي">
+        </div>
+      `).join('')}
+    </div>`;
+  panel.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function calculateAssessmentScore(){
+  const answers = [...document.querySelectorAll('#assessmentPanel .assessment-answer')];
+  let total = 0, max = 0;
+  answers.forEach(answer => {
+    if(answer.value === 'na' || answer.value === '') return;
+    total += Number(answer.value);
+    max += 2;
+  });
+  const score = max ? Math.round((total / max) * 100) : 0;
+  const pill = document.getElementById('assessmentScore');
+  if(pill) pill.textContent = score + '%';
+  return score;
+}
+
+function submitChecklistAssessment(id){
+  const template = checklistTemplates.find(item => item.id === id);
+  if(!template) return;
+  const rows = [...document.querySelectorAll('#assessmentPanel .assessment-row')];
+  const unanswered = rows.filter(row => !row.querySelector('.assessment-answer')?.value);
+  if(unanswered.length){
+    showToast('يرجى تعبئة كل البنود أو اختيار غير منطبق','error');
+    return;
+  }
+  const score = calculateAssessmentScore();
+  const facility = document.getElementById('assessmentFacility')?.value || template.facility;
+  const unit = document.getElementById('assessmentUnit')?.value || template.department;
+  const details = rows.map((row,index)=>{
+    const item = template.items[index];
+    const answer = row.querySelector('.assessment-answer');
+    const note = row.querySelector('.assessment-note')?.value || '';
+    const label = answer.options[answer.selectedIndex]?.text || '';
+    return `${index+1}. ${item}: ${label}${note ? ' - ' + note : ''}`;
+  });
+  dailyReports.unshift({
+    id:'CHK-'+Date.now(),
+    facility,
+    date:new Date().toISOString().slice(0,10),
+    cases:details.filter(line=>line.includes('لا / غير مطبق')).length,
+    compliance:score,
+    status:'بانتظار الاعتماد',
+    templateTitle:template.title,
+    department:unit,
+    standard:template.standard,
+    details:details.join('<br>'),
+    author:currentUserProfile?.name || document.getElementById('userName')?.textContent || 'عامل ضبط العدوى'
+  });
+  addAudit('إرسال قائمة تحقق إلكترونية للاعتماد');
+  persistUiState();
+  renderAll();
+  showPage('daily');
+  showToast('تم إرسال التقرير للمدير بانتظار الاعتماد');
 }
 
 function editUser(index){
