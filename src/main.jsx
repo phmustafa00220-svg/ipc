@@ -351,7 +351,7 @@ function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-mark"><ShieldCheck size={28} /></div>
+          <img className="brand-logo" src="/ipc/hihfad-logo.jpg" alt="HIHFAD" />
           <div>
             <strong>IPC Control</strong>
             <span>{data.organization}</span>
@@ -426,7 +426,7 @@ function Login({ data, onLogin }) {
     <main className="login-page">
       <section className="login-panel">
         <div className="login-hero">
-          <div className="brand-mark large"><ShieldCheck size={42} /></div>
+          <img className="login-logo" src="/ipc/hihfad-logo.jpg" alt="HIHFAD" />
           <p>منصة يداً بيد</p>
           <h1>نظام إدارة ضبط العدوى في المنشآت الصحية</h1>
           <span>تسجيل دخول حسب الدور، متابعة مهام يومية، قوائم تحقق، تقارير وتنبيهات فورية.</span>
