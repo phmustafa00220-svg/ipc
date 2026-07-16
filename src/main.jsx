@@ -9,6 +9,7 @@ import {
   CalendarCheck,
   CheckCircle2,
   ClipboardCheck,
+  GraduationCap,
   Download,
   FileText,
   Filter,
@@ -17,11 +18,13 @@ import {
   Lock,
   LogOut,
   MessageSquare,
+  PackageCheck,
   Plus,
   Search,
   Settings,
   ShieldCheck,
   Stethoscope,
+  Siren,
   UserCog,
   Users,
 } from "lucide-react";
@@ -231,10 +234,10 @@ const roles = {
 };
 
 const permissions = {
-  [roles.ADMIN]: ["dashboard", "tasks", "daily", "checklists", "reports", "facilities", "users", "settings"],
-  [roles.FACILITY_MANAGER]: ["dashboard", "tasks", "daily", "checklists", "reports", "users", "settings"],
-  [roles.IPC_OFFICER]: ["dashboard", "tasks", "daily", "checklists", "reports", "settings"],
-  [roles.HEALTH_WORKER]: ["tasks", "daily", "checklists", "reports", "settings"],
+  [roles.ADMIN]: ["dashboard", "tasks", "daily", "checklists", "reports", "incidents", "inventory", "training", "facilities", "users", "settings"],
+  [roles.FACILITY_MANAGER]: ["dashboard", "tasks", "daily", "checklists", "reports", "incidents", "inventory", "training", "users", "settings"],
+  [roles.IPC_OFFICER]: ["dashboard", "tasks", "daily", "checklists", "reports", "incidents", "inventory", "training", "settings"],
+  [roles.HEALTH_WORKER]: ["tasks", "daily", "checklists", "reports", "incidents", "training", "settings"],
 };
 
 const defaultData = {
@@ -377,6 +380,41 @@ const defaultData = {
       actions: "إبلاغ المدير المناوب وطلب توريد عاجل.",
     },
   ],
+  incidents: [
+    {
+      id: "i1",
+      date: today,
+      facilityId: "hama-hospital",
+      department: "التوليد",
+      type: "نقص معدات وقاية",
+      severity: "عال",
+      status: "مفتوح",
+      ownerId: "u-hama-nurse",
+      description: "نقص كمامات طبية أثناء وردية المساء في غرفة الولادة.",
+      action: "طلب توريد عاجل ومراجعة نقطة المخزون الاحتياطي.",
+    },
+    {
+      id: "i2",
+      date: today,
+      facilityId: "ibn-al-walid",
+      department: "الجراحة",
+      type: "تعرض مهني",
+      severity: "متوسط",
+      status: "قيد المتابعة",
+      ownerId: "u-ipc-ibn",
+      description: "وخز إبرة بعد إجراء تبديل ضماد.",
+      action: "تطبيق بروتوكول التعرض، وتوثيق الحالة، ومتابعة العامل.",
+    },
+  ],
+  inventory: [
+    { id: "m1", facilityId: "ibn-al-walid", item: "معقم يد كحولي", unit: "عبوة", stock: 42, minimum: 25, status: "كاف" },
+    { id: "m2", facilityId: "hama-hospital", item: "كمامات طبية", unit: "علبة", stock: 8, minimum: 20, status: "ناقص" },
+    { id: "m3", facilityId: "ibn-al-walid", item: "قفازات فحص", unit: "علبة", stock: 18, minimum: 30, status: "ناقص" },
+  ],
+  trainings: [
+    { id: "tr1", title: "نظافة اليدين والاحتياطات القياسية", facilityId: "all", audience: "كل الكادر", date: today, completion: 72, status: "مجدول" },
+    { id: "tr2", title: "إدارة النفايات الطبية والأدوات الحادة", facilityId: "hama-hospital", audience: "التمريض والخدمات", date: today, completion: 54, status: "قيد التنفيذ" },
+  ],
   submissions: [],
 };
 
@@ -498,6 +536,33 @@ function App() {
     persist({ ...data, tasks: [{ id: `task-${Date.now()}`, status: "مفتوحة", ...payload }, ...data.tasks] });
   }
 
+  function addIncident(payload) {
+    const incident = { id: `inc-${Date.now()}`, date: today, ownerId: user.id, status: "مفتوح", ...payload };
+    const report = {
+      id: `r-inc-${Date.now()}`,
+      date: today,
+      facilityId: payload.facilityId,
+      department: payload.department,
+      authorId: user.id,
+      type: "بلاغ حادثة",
+      priority: payload.severity,
+      status: payload.severity === "عال" ? "طارئ" : "جديد",
+      score: payload.severity === "عال" ? 55 : 75,
+      title: payload.type,
+      notes: payload.description,
+      actions: payload.action,
+    };
+    persist({ ...data, incidents: [incident, ...(data.incidents || [])], reports: [report, ...data.reports] });
+  }
+
+  function addInventoryItem(payload) {
+    persist({ ...data, inventory: [{ id: `mat-${Date.now()}`, ...payload }, ...(data.inventory || [])] });
+  }
+
+  function addTraining(payload) {
+    persist({ ...data, trainings: [{ id: `train-${Date.now()}`, completion: 0, status: "مجدول", ...payload }, ...(data.trainings || [])] });
+  }
+
   function updateTaskStatus(id, status) {
     persist({ ...data, tasks: data.tasks.map((task) => (task.id === id ? { ...task, status } : task)) });
   }
@@ -569,6 +634,9 @@ function App() {
           {canSee.has("daily") && <NavButton icon={<MessageSquare />} label="تقرير يومي" active={safeView === "daily"} onClick={() => setView("daily")} />}
           {canSee.has("checklists") && <NavButton icon={<ClipboardCheck />} label="قوائم التحقق" active={safeView === "checklists"} onClick={() => setView("checklists")} />}
           {canSee.has("reports") && <NavButton icon={<FileText />} label="التقارير" active={safeView === "reports"} onClick={() => setView("reports")} />}
+          {canSee.has("incidents") && <NavButton icon={<Siren />} label="الحوادث والمخاطر" active={safeView === "incidents"} onClick={() => setView("incidents")} />}
+          {canSee.has("inventory") && <NavButton icon={<PackageCheck />} label="المخزون الوقائي" active={safeView === "inventory"} onClick={() => setView("inventory")} />}
+          {canSee.has("training") && <NavButton icon={<GraduationCap />} label="التدريب" active={safeView === "training"} onClick={() => setView("training")} />}
           {canSee.has("facilities") && <NavButton icon={<Hospital />} label="المنشآت" active={safeView === "facilities"} onClick={() => setView("facilities")} />}
           {canSee.has("users") && <NavButton icon={<Users />} label="المستخدمون" active={safeView === "users"} onClick={() => setView("users")} />}
           {canSee.has("settings") && <NavButton icon={<Settings />} label="الإعدادات" active={safeView === "settings"} onClick={() => setView("settings")} />}
@@ -599,6 +667,9 @@ function App() {
           {safeView === "daily" && <DailyReport data={data} user={user} addReport={addReport} />}
           {safeView === "checklists" && <Checklists data={data} user={user} addTemplate={addTemplate} addSubmission={addSubmission} />}
           {safeView === "reports" && <Reports data={data} reports={visibleReports} query={query} setQuery={setQuery} facilityFilter={facilityFilter} setFacilityFilter={setFacilityFilter} updateReportStatus={updateReportStatus} generateReportPdf={generateReportPdf} />}
+          {safeView === "incidents" && <Incidents data={data} user={user} addIncident={addIncident} />}
+          {safeView === "inventory" && <Inventory data={data} user={user} addInventoryItem={addInventoryItem} />}
+          {safeView === "training" && <Training data={data} user={user} addTraining={addTraining} />}
           {safeView === "facilities" && <Facilities data={data} addFacility={addFacility} />}
           {safeView === "users" && <UsersPanel data={data} user={user} addUser={addUser} />}
           {safeView === "settings" && <SettingsPanel data={data} user={user} />}
@@ -791,6 +862,28 @@ function ReportList({ reports, data, updateReportStatus, generateReportPdf }) {
 function Facilities({ data, addFacility }) {
   const [form, setForm] = useState({ name: "", city: "", type: "", departments: "", riskLevel: "متوسط" });
   return <div className="split-grid"><section className="panel"><div className="facility-grid">{data.facilities.map((facility) => <article className="facility-card" key={facility.id}><Building2 size={24} /><h3>{facility.name}</h3><p>{facility.city} - {facility.type}</p><span className={`risk risk-${facility.riskLevel}`}>خطورة {facility.riskLevel}</span><div className="tag-row">{facility.departments.map((item) => <span key={item}>{item}</span>)}</div></article>)}</div></section><section className="panel form-panel"><h2>إضافة منشأة</h2><input placeholder="اسم المنشأة" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /><input placeholder="المدينة" value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })} /><input placeholder="نوع المنشأة" value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })} /><input placeholder="الأقسام مفصولة بفواصل" value={form.departments} onChange={(event) => setForm({ ...form, departments: event.target.value })} /><select value={form.riskLevel} onChange={(event) => setForm({ ...form, riskLevel: event.target.value })}><option>منخفض</option><option>متوسط</option><option>عال</option></select><button className="primary-button" disabled={!form.name} onClick={() => addFacility({ ...form, departments: form.departments.split(",").map((item) => item.trim()).filter(Boolean) })}><Plus size={18} /> إضافة المنشأة</button></section></div>;
+}
+
+function Incidents({ data, user, addIncident }) {
+  const defaultFacility = user.facilityId === "all" ? data.facilities[0].id : user.facilityId;
+  const [form, setForm] = useState({ facilityId: defaultFacility, department: user.department, type: "تعرض مهني", severity: "متوسط", description: "", action: "" });
+  const facility = data.facilities.find((item) => item.id === form.facilityId);
+  const incidents = (data.incidents || []).filter((item) => allowedFor(user, item));
+  return <div className="split-grid"><section className="panel"><div className="panel-header"><div><h2>سجل الحوادث والمخاطر</h2><p>كل حادثة تتحول تلقائياً إلى تقرير للمدير ومسؤول ضبط العدوى.</p></div></div><div className="module-grid">{incidents.map((item) => <article className="module-card" key={item.id}><span className={`priority-badge priority-${item.severity}`}>{item.severity}</span><h3>{item.type}</h3><p>{facilityName(data, item.facilityId)} - {item.department}</p><small>{item.description}</small><strong>{item.status}</strong></article>)}</div></section><section className="panel form-panel"><h2>بلاغ حادثة جديد</h2><select value={form.facilityId} onChange={(event) => setForm({ ...form, facilityId: event.target.value, department: data.facilities.find((item) => item.id === event.target.value)?.departments[0] || "" })}>{data.facilities.filter((item) => user.facilityId === "all" || item.id === user.facilityId).map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select><select value={form.department} onChange={(event) => setForm({ ...form, department: event.target.value })}>{facility?.departments.map((item) => <option key={item}>{item}</option>)}</select><select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })}><option>تعرض مهني</option><option>نقص معدات وقاية</option><option>اشتباه عدوى مكتسبة</option><option>خلل تعقيم</option><option>مشكلة نفايات</option></select><select value={form.severity} onChange={(event) => setForm({ ...form, severity: event.target.value })}><option>منخفض</option><option>متوسط</option><option>عال</option></select><textarea placeholder="وصف الحادثة..." value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /><textarea placeholder="الإجراء الفوري أو التصحيحي..." value={form.action} onChange={(event) => setForm({ ...form, action: event.target.value })} /><button className="primary-button" disabled={!form.description} onClick={() => addIncident(form)}><Siren size={18} /> إرسال البلاغ</button></section></div>;
+}
+
+function Inventory({ data, user, addInventoryItem }) {
+  const defaultFacility = user.facilityId === "all" ? data.facilities[0].id : user.facilityId;
+  const [form, setForm] = useState({ facilityId: defaultFacility, item: "", unit: "علبة", stock: 0, minimum: 10, status: "كاف" });
+  const items = (data.inventory || []).filter((item) => user.role === roles.ADMIN || item.facilityId === user.facilityId);
+  return <div className="split-grid"><section className="panel"><div className="panel-header"><div><h2>مخزون الوقاية والتعقيم</h2><p>تتبع النواقص التي تؤثر مباشرة على ضبط العدوى.</p></div></div><div className="module-grid">{items.map((item) => <article className="module-card" key={item.id}><span className={`risk risk-${item.status === "ناقص" ? "عال" : "منخفض"}`}>{item.status}</span><h3>{item.item}</h3><p>{facilityName(data, item.facilityId)}</p><div className="stock-line"><strong>{item.stock}</strong><span>{item.unit}</span><small>الحد الأدنى {item.minimum}</small></div></article>)}</div></section><section className="panel form-panel"><h2>إضافة مادة</h2><select value={form.facilityId} onChange={(event) => setForm({ ...form, facilityId: event.target.value })}>{data.facilities.filter((item) => user.facilityId === "all" || item.id === user.facilityId).map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select><input placeholder="اسم المادة" value={form.item} onChange={(event) => setForm({ ...form, item: event.target.value })} /><input placeholder="الوحدة" value={form.unit} onChange={(event) => setForm({ ...form, unit: event.target.value })} /><input type="number" placeholder="الكمية" value={form.stock} onChange={(event) => setForm({ ...form, stock: Number(event.target.value), status: Number(event.target.value) < form.minimum ? "ناقص" : "كاف" })} /><input type="number" placeholder="الحد الأدنى" value={form.minimum} onChange={(event) => setForm({ ...form, minimum: Number(event.target.value), status: form.stock < Number(event.target.value) ? "ناقص" : "كاف" })} /><button className="primary-button" disabled={!form.item} onClick={() => addInventoryItem(form)}><PackageCheck size={18} /> حفظ المادة</button></section></div>;
+}
+
+function Training({ data, user, addTraining }) {
+  const defaultFacility = user.facilityId === "all" ? "all" : user.facilityId;
+  const [form, setForm] = useState({ title: "", facilityId: defaultFacility, audience: "", date: today });
+  const trainings = (data.trainings || []).filter((item) => user.role === roles.ADMIN || item.facilityId === "all" || item.facilityId === user.facilityId);
+  return <div className="split-grid"><section className="panel"><div className="panel-header"><div><h2>خطة التدريب والتوعية</h2><p>متابعة تدريب الكادر على الاحتياطات القياسية وإجراءات الأقسام.</p></div></div><div className="module-grid">{trainings.map((item) => <article className="module-card" key={item.id}><span className="risk risk-متوسط">{item.status}</span><h3>{item.title}</h3><p>{facilityName(data, item.facilityId)} - {item.audience}</p><div className="progress"><i style={{ width: `${item.completion}%` }} /></div><small>نسبة الإنجاز {item.completion}% - {item.date}</small></article>)}</div></section><section className="panel form-panel"><h2>إضافة تدريب</h2><input placeholder="عنوان التدريب" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} /><select value={form.facilityId} onChange={(event) => setForm({ ...form, facilityId: event.target.value })}>{user.role === roles.ADMIN && <option value="all">كل المنشآت</option>}{data.facilities.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select><input placeholder="الفئة المستهدفة" value={form.audience} onChange={(event) => setForm({ ...form, audience: event.target.value })} /><input type="date" value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} /><button className="primary-button" disabled={!form.title} onClick={() => addTraining(form)}><GraduationCap size={18} /> حفظ التدريب</button></section></div>;
 }
 
 function UsersPanel({ data, user, addUser }) {
