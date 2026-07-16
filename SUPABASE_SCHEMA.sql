@@ -61,20 +61,8 @@ drop policy if exists "state_write_authorized" on public.app_state;
 create policy "state_write_authorized"
 on public.app_state for all
 to authenticated
-using (
-  exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid()
-    and p.status = 'نشط'
-  )
-)
-with check (
-  exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid()
-    and p.status = 'نشط'
-  )
-);
+using (auth.uid() is not null)
+with check (auth.uid() is not null);
 
 create or replace function public.touch_app_state()
 returns trigger
