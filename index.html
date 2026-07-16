@@ -841,6 +841,22 @@ let remoteMode = false;
 let supabaseMode = false;
 let supabaseClient = null;
 let installPromptEvent = null;
+let currentUserProfile = null;
+
+const ipcSpecialties = [
+  'عام','الإدارة','الإسعاف','الفرز','العيادات','التمريض','غرف العمليات','الجراحة','العناية المركزة','النسائية والتوليد','الأطفال والحواضن','المختبر','الأشعة','الأسنان','التعقيم المركزي','غسيل الكلى','الصيدلية','النفايات الطبية','النظافة والتطهير','العزل','التغذية والمطبخ','المغسلة'
+];
+
+const reportCatalog = [
+  { id:'rep-daily-ipc', title:'التقرير اليومي لضبط العدوى', frequency:'يومي', specialty:'عام' },
+  { id:'rep-hand-hygiene', title:'رصد نظافة اليدين', frequency:'يومي', specialty:'التمريض' },
+  { id:'rep-sterilization', title:'تقرير التعقيم المركزي', frequency:'يومي', specialty:'التعقيم المركزي' },
+  { id:'rep-surgical-site', title:'ترصد عدوى موضع العمل الجراحي', frequency:'أسبوعي', specialty:'غرف العمليات' },
+  { id:'rep-waste', title:'إدارة النفايات الطبية', frequency:'يومي', specialty:'النفايات الطبية' },
+  { id:'rep-isolation', title:'تقرير غرف العزل والاحتياطات القياسية', frequency:'يومي', specialty:'العزل' },
+  { id:'rep-maternity', title:'تقرير الولادة النظيفة والنسائية', frequency:'يومي', specialty:'النسائية والتوليد' },
+  { id:'rep-lab', title:'سلامة المختبر والتعامل مع العينات', frequency:'أسبوعي', specialty:'المختبر' }
+];
 
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('/ipc/sw.js').catch(()=>{});
@@ -943,8 +959,14 @@ function mapServerState(state){
     id: u.id,
     name: u.name,
     username: u.username,
+    email: u.email,
     role: u.role,
     facility: facilityNameById(u.facilityId, state),
+    facilities: u.facilities || [facilityNameById(u.facilityId, state)],
+    specialty: u.specialty || u.department || 'عام',
+    reportTypes: u.reportTypes || reportCatalog.map(r=>r.title),
+    reportFrequency: u.reportFrequency || 'يومي',
+    manager: u.manager || 'مدير النظام',
     phone: u.phone || '-',
     status: u.status || 'نشط'
   })));
@@ -1010,9 +1032,15 @@ function snapshotState(){
       id: s.id || `user-${index+1}`,
       name: s.name,
       username: s.username || (s.name || `user${index+1}`).replace(/\s+/g,'.').toLowerCase(),
+      email: s.email || s.username || '',
       ...(s.password ? { password: s.password } : {}),
       role: s.role || 'عامل صحي',
       facilityId: stateFacilities.find(f => f.name === s.facility)?.id || 'all',
+      facilities: userFacilities(s),
+      specialty: s.specialty || 'عام',
+      reportTypes: s.reportTypes || reportCatalog.map(r=>r.title),
+      reportFrequency: s.reportFrequency || 'يومي',
+      manager: s.manager || 'مدير النظام',
       department: 'ضبط العدوى',
       status: s.status || 'نشط'
     })),
@@ -1109,6 +1137,7 @@ async function handleLogin(e){
       supabaseMode = true;
       remoteMode = false;
       const { data: profile } = await client.from('profiles').select('*').eq('id', data.user.id).maybeSingle();
+      currentUserProfile = { id:data.user.id, email:data.user.email, name:profile?.name || data.user.email, role:profile?.role || 'مستخدم' };
       document.getElementById('userName').textContent = profile?.name || data.user.email;
       document.getElementById('userRole').textContent = profile?.role || 'مستخدم';
       document.getElementById('userAvatar').textContent = (profile?.name || data.user.email || 'U').charAt(0).toUpperCase();
@@ -1190,7 +1219,7 @@ if(localStorage.getItem('theme'))document.documentElement.setAttribute('data-the
 // Render
 function renderAll(){
   updateStats();
-  renderFacilities();renderStaff();renderTasks();renderUrgent();renderDaily();renderIncidents();renderChecklists();renderAudit();
+  renderFacilities();renderStaff();renderUsers();renderTasks();renderUrgent();renderDaily();renderIncidents();renderChecklists();renderAudit();
 }
 
 function updateStats(){
@@ -1278,6 +1307,67 @@ function renderStaff(){
     </tr>`).join('');
 }
 
+function ensureUsersManagementPanel(){
+  const page = document.getElementById('users');
+  if(!page || document.getElementById('usersManagementCard')) return;
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.id = 'usersManagementCard';
+  card.innerHTML = `
+    <div class="card-header">
+      <h3>مصفوفة المستخدمين والصلاحيات</h3>
+      <button class="btn btn-primary btn-sm" onclick="openModal('newStaffModal')"><i class="fas fa-user-plus"></i> إضافة مستخدم</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>المستخدم</th><th>الدور</th><th>المنشآت المكلف بها</th><th>التقارير المطلوبة</th><th>التواتر</th><th>المسؤول المباشر</th><th>الحالة</th><th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="usersTable"></tbody>
+      </table>
+    </div>`;
+  const header = page.querySelector('.page-header');
+  if(header) header.after(card); else page.prepend(card);
+}
+
+function userFacilities(user){
+  if(Array.isArray(user.facilities) && user.facilities.length) return user.facilities;
+  if(user.facility) return [user.facility];
+  return ['كل المنشآت'];
+}
+
+function renderUsers(){
+  ensureUsersManagementPanel();
+  const body = document.getElementById('usersTable');
+  if(!body) return;
+  body.innerHTML = staff.map((s,index)=>{
+    const reports = Array.isArray(s.reportTypes) && s.reportTypes.length ? s.reportTypes : ['التقرير اليومي لضبط العدوى'];
+    const facilitiesList = userFacilities(s);
+    return `
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="user-avatar" style="width:35px;height:35px;font-size:13px">${(s.name || 'م').trim().charAt(0)}</div>
+            <div><div style="font-weight:700">${s.name || '-'}</div><div style="font-size:12px;color:var(--text2)">${s.username || s.email || '-'}</div></div>
+          </div>
+        </td>
+        <td><span class="status info">${s.role || '-'}</span></td>
+        <td>${facilitiesList.join('، ')}</td>
+        <td>${reports.slice(0,3).join('، ')}${reports.length>3?'...':''}</td>
+        <td>${s.reportFrequency || 'يومي'}</td>
+        <td>${s.manager || 'مدير النظام'}</td>
+        <td><span class="status ${(s.status || '').includes('نشط') || s.status==='ظ†ط´ط·'?'success':'warning'}">${s.status || 'نشط'}</span></td>
+        <td>
+          <button class="btn btn-secondary btn-sm" onclick="editUser(${index})"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-primary btn-sm" onclick="assignUserReports(${index})"><i class="fas fa-clipboard-list"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteUser(${index})"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
 function renderTasks(filter='all'){
   let f=tasks;
   if(filter==='pending')f=tasks.filter(t=>!t.done);
@@ -1361,7 +1451,7 @@ function startChecklist(id){
   const scoreInput = prompt(`نتيجة ${c.title} من 100`, '90');
   if(scoreInput === null) return;
   const score = Math.max(0, Math.min(100, Number(scoreInput) || 0));
-  dailyReports.unshift({ id:'CHK-'+Date.now(), facility:c.facility, date:new Date().toISOString().slice(0,10), cases:0, compliance:score, status: score < 80 ? 'بحاجة لإجراء' : 'معتمد' });
+  dailyReports.unshift({ id:'CHK-'+Date.now(), facility:c.facility, date:new Date().toISOString().slice(0,10), cases:0, compliance:score, status:'بانتظار الاعتماد', templateTitle:c.title, department:c.department, details:(c.items || []).map((item,i)=>`${i+1}. ${item}`).join('<br>') });
   addAudit('تنفيذ قائمة تحقق');
   persistUiState();
   renderAll();
@@ -1395,6 +1485,61 @@ function deleteChecklist(id){
   renderAll();
 }
 
+function editUser(index){
+  const user = staff[index];
+  if(!user) return;
+  const name = prompt('اسم المستخدم الكامل', user.name || '');
+  if(name === null) return;
+  const role = prompt('الدور / الصلاحية', user.role || 'عامل ضبط عدوى');
+  if(role === null) return;
+  const facilityText = prompt('المنشآت المكلف بها - افصل بينها بفاصلة', userFacilities(user).join(', '));
+  if(facilityText === null) return;
+  const manager = prompt('المسؤول المباشر', user.manager || 'مدير النظام');
+  if(manager === null) return;
+  const selectedFacilities = facilityText.split(',').map(x=>x.trim()).filter(Boolean);
+  staff[index] = {
+    ...user,
+    name: name.trim() || user.name,
+    role: role.trim() || user.role,
+    facilities: selectedFacilities,
+    facility: selectedFacilities[0] || user.facility,
+    manager: manager.trim() || user.manager || 'مدير النظام',
+    status: user.status || 'نشط'
+  };
+  addAudit('تعديل صلاحيات مستخدم');
+  persistUiState();
+  renderAll();
+}
+
+function assignUserReports(index){
+  const user = staff[index];
+  if(!user) return;
+  const available = reportCatalog.map(r=>r.title).join(', ');
+  const current = Array.isArray(user.reportTypes) && user.reportTypes.length ? user.reportTypes.join(', ') : available;
+  const reportText = prompt('التقارير المطلوبة من المستخدم', current);
+  if(reportText === null) return;
+  const frequency = prompt('تواتر التنفيذ: يومي / أسبوعي / شهري / عند الحاجة', user.reportFrequency || 'يومي');
+  if(frequency === null) return;
+  staff[index] = {
+    ...user,
+    reportTypes: reportText.split(',').map(x=>x.trim()).filter(Boolean),
+    reportFrequency: frequency.trim() || 'يومي'
+  };
+  addAudit('تكليف مستخدم بتقارير وقوائم تحقق');
+  persistUiState();
+  renderAll();
+}
+
+function deleteUser(index){
+  const user = staff[index];
+  if(!user) return;
+  if(!confirm(`حذف المستخدم ${user.name} من نظام الصلاحيات؟`)) return;
+  staff.splice(index,1);
+  addAudit('حذف مستخدم');
+  persistUiState();
+  renderAll();
+}
+
 function renderUrgent(){
   const u=tasks.filter(t=>!t.done&&t.priority==='high').slice(0,3);
   document.getElementById('urgentTasks').innerHTML=u.map(t=>`
@@ -1415,6 +1560,91 @@ function renderDaily(){
       <td><span class="status ${r.status==='معتمد'?'success':'warning'}">${r.status}</span></td>
       <td><button class="btn btn-secondary btn-sm" onclick="window.print()"><i class="fas fa-print"></i></button> <button class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i></button></td>
     </tr>`).join('');
+}
+
+function renderDaily(){
+  const body = document.getElementById('dailyTable');
+  if(!body) return;
+  body.innerHTML=dailyReports.map(r=>`
+    <tr>
+      <td><strong>${r.id}</strong></td><td>${r.facility}</td><td>${r.date}</td><td>${r.cases || 0}</td>
+      <td><div style="display:flex;align-items:center;gap:10px"><div style="flex:1;background:var(--bg);height:8px;border-radius:10px;overflow:hidden"><div style="width:${r.compliance || 0}%;height:100%;background:${Number(r.compliance||0)>=90?'var(--secondary)':Number(r.compliance||0)>=80?'var(--warning)':'var(--danger)'}"></div></div><strong>${r.compliance || 0}%</strong></div></td>
+      <td><span class="status ${String(r.status || '').includes('معتمد') || r.status==='ظ…ط¹طھظ…ط¯'?'success':'warning'}">${r.status || 'بانتظار الاعتماد'}</span></td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="printProfessionalReport('${r.id}')"><i class="fas fa-print"></i></button>
+        <button class="btn btn-primary btn-sm" onclick="approveReport('${r.id}')"><i class="fas fa-check"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="rejectReport('${r.id}')"><i class="fas fa-undo"></i></button>
+      </td>
+    </tr>`).join('');
+}
+
+function findReportById(id){
+  return dailyReports.find(r => String(r.id) === String(id));
+}
+
+function approveReport(id){
+  const report = findReportById(id);
+  if(!report) return;
+  report.status = 'معتمد';
+  report.approvedBy = currentUserProfile?.name || document.getElementById('userName')?.textContent || 'مدير النظام';
+  report.approvedAt = new Date().toLocaleString('ar-SY');
+  addAudit('اعتماد تقرير ضبط عدوى');
+  persistUiState();
+  renderAll();
+  showToast('تم اعتماد التقرير');
+}
+
+function rejectReport(id){
+  const report = findReportById(id);
+  if(!report) return;
+  const reason = prompt('سبب إعادة التقرير للمراجعة', report.reviewNote || '');
+  if(reason === null) return;
+  report.status = 'بحاجة مراجعة';
+  report.reviewNote = reason;
+  addAudit('إعادة تقرير للمراجعة');
+  persistUiState();
+  renderAll();
+  showToast('تمت إعادة التقرير للمراجعة');
+}
+
+function printProfessionalReport(id){
+  const report = findReportById(id);
+  if(!report) return;
+  const reportTitle = report.templateTitle || report.title || 'تقرير ضبط العدوى اليومي';
+  const details = report.details || report.notes || 'لا توجد ملاحظات إضافية.';
+  const approvedLine = report.approvedBy ? `${report.approvedBy} - ${report.approvedAt || ''}` : 'بانتظار اعتماد المدير / مسؤول ضبط العدوى';
+  const html = `
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<title>${reportTitle}</title>
+<style>
+  body{font-family:Arial,Tahoma,sans-serif;margin:0;background:#f4f7fb;color:#142033}
+  .sheet{width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:18mm;box-sizing:border-box}
+  .head{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #2bbdb8;padding-bottom:14px;margin-bottom:18px}
+  .brand{display:flex;align-items:center;gap:12px}.brand img{width:62px;height:62px;border-radius:14px}.brand h1{margin:0;font-size:22px}.brand p{margin:4px 0 0;color:#64748b}
+  .badge{border:1px solid #2bbdb8;color:#107a75;padding:8px 12px;border-radius:999px;font-weight:700}
+  table{width:100%;border-collapse:collapse;margin:14px 0}td,th{border:1px solid #dbe4ef;padding:10px;text-align:right}th{background:#eef9f8;color:#0f766e}
+  .score{font-size:42px;font-weight:800;color:${Number(report.compliance||0)>=90?'#129c72':Number(report.compliance||0)>=80?'#c28400':'#c2410c'}}
+  .section{margin-top:18px}.section h2{font-size:17px;border-right:5px solid #2bbdb8;padding-right:10px}
+  .signatures{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:32px}.sign{border:1px dashed #94a3b8;padding:16px;min-height:70px}
+  @media print{body{background:#fff}.sheet{margin:0;width:auto;min-height:auto;box-shadow:none}.no-print{display:none}}
+</style></head><body><div class="sheet">
+  <div class="head">
+    <div class="brand"><img src="/ipc/hihfad-logo.jpg" alt="HIHFAD"><div><h1>HIHFAD - نظام ضبط العدوى</h1><p>يدا بيد للإغاثة والتنمية</p></div></div>
+    <div class="badge">${report.status || 'جديد'}</div>
+  </div>
+  <h1>${reportTitle}</h1>
+  <table>
+    <tr><th>رقم التقرير</th><td>${report.id}</td><th>المنشأة</th><td>${report.facility}</td></tr>
+    <tr><th>التاريخ</th><td>${report.date}</td><th>القسم / الاختصاص</th><td>${report.department || 'ضبط العدوى'}</td></tr>
+    <tr><th>عدد الحالات</th><td>${report.cases || 0}</td><th>نسبة الالتزام</th><td><span class="score">${report.compliance || 0}%</span></td></tr>
+  </table>
+  <div class="section"><h2>ملخص التحقق الإلكتروني</h2><p>${details}</p></div>
+  <div class="section"><h2>قرار الاعتماد</h2><p>${approvedLine}</p>${report.reviewNote?`<p><strong>ملاحظة المراجعة:</strong> ${report.reviewNote}</p>`:''}</div>
+  <div class="signatures"><div class="sign"><strong>منفذ التقرير</strong><br>${report.author || 'عامل ضبط العدوى'}</div><div class="sign"><strong>اعتماد المدير / المسؤول</strong><br>${approvedLine}</div></div>
+</div><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
 }
 
 function renderIncidents(){
@@ -1484,7 +1714,46 @@ setInterval(()=>{
 },10000);
 
 // Modals
-function openModal(id){document.getElementById(id).classList.add('active')}
+function prepareStaffModal(){
+  const body = document.querySelector('#newStaffModal .modal-body');
+  if(!body) return;
+  const facilitySelect = body.querySelector('.form-row:nth-child(2) select');
+  if(facilitySelect){
+    facilitySelect.innerHTML = facilities.map(f=>`<option value="${f.name}">${f.name}</option>`).join('');
+  }
+  if(!document.getElementById('staffAdvancedFields')){
+    body.insertAdjacentHTML('beforeend', `
+      <div id="staffAdvancedFields">
+        <div class="form-row">
+          <div class="form-group"><label>اسم الدخول أو البريد</label><input id="staffEmail" type="text" placeholder="مثال: nurse1 أو user@hihfad.local"></div>
+          <div class="form-group"><label>كلمة مرور مبدئية</label><input id="staffPassword" type="password" placeholder="تُستخدم عند إنشاء الحساب في Supabase"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>المنشآت التي يشرف عليها</label><select id="staffFacilities" multiple size="4"></select></div>
+          <div class="form-group"><label>الاختصاص</label><select id="staffSpecialty"></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>التقارير المطلوبة</label><select id="staffReportTypes" multiple size="5"></select></div>
+          <div class="form-group"><label>تواتر التقارير</label><select id="staffReportFrequency"><option>يومي</option><option>أسبوعي</option><option>شهري</option><option>عند الحاجة</option></select></div>
+        </div>
+        <div class="form-group"><label>المسؤول المباشر</label><select id="staffManager"></select></div>
+      </div>`);
+  }
+  const facilitiesBox = document.getElementById('staffFacilities');
+  if(facilitiesBox) facilitiesBox.innerHTML = facilities.map(f=>`<option value="${f.name}">${f.name}</option>`).join('');
+  const specialty = document.getElementById('staffSpecialty');
+  if(specialty) specialty.innerHTML = ipcSpecialties.map(s=>`<option value="${s}">${s}</option>`).join('');
+  const reports = document.getElementById('staffReportTypes');
+  if(reports) reports.innerHTML = reportCatalog.map(r=>`<option value="${r.title}">${r.title} - ${r.frequency}</option>`).join('');
+  const manager = document.getElementById('staffManager');
+  if(manager) manager.innerHTML = `<option value="مدير النظام">مدير النظام</option>` + staff.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
+}
+
+function openModal(id){
+  if(id === 'newStaffModal') prepareStaffModal();
+  if(id === 'newChecklistModal') renderChecklists();
+  document.getElementById(id).classList.add('active');
+}
 function closeModal(id){document.getElementById(id).classList.remove('active')}
 function save(modal,msg){
   const modalEl = document.getElementById(modal);
@@ -1512,13 +1781,31 @@ function save(modal,msg){
       id:'staff-'+Date.now(),
       name:value(0) || 'موظف جديد',
       username:(value(0) || 'user').replace(/\s+/g,'.').toLowerCase(),
-      password:'123456',
+      password:'',
       role:value(1) || 'مسؤول ضبط عدوى',
       facility:value(2) || facilities[0]?.name || '-',
       phone:value(3) || '-',
       status:'نشط'
     });
     addAudit('إضافة موظف جديد');
+  }
+
+  if(modal === 'newStaffModal'){
+    const created = staff[staff.length - 1];
+    if(created){
+      const selectedFacilities = [...(document.getElementById('staffFacilities')?.selectedOptions || [])].map(o=>o.value);
+      const selectedReports = [...(document.getElementById('staffReportTypes')?.selectedOptions || [])].map(o=>o.value);
+      const loginValue = document.getElementById('staffEmail')?.value?.trim();
+      created.username = loginValue || created.username;
+      created.email = loginValue && loginValue.includes('@') ? loginValue : (loginValue ? `${loginValue}@hihfad.local` : created.email || '');
+      created.password = document.getElementById('staffPassword')?.value || '';
+      created.facilities = selectedFacilities.length ? selectedFacilities : [created.facility || facilities[0]?.name || '-'];
+      created.facility = created.facilities[0];
+      created.specialty = document.getElementById('staffSpecialty')?.value || 'عام';
+      created.reportTypes = selectedReports.length ? selectedReports : reportCatalog.map(r=>r.title);
+      created.reportFrequency = document.getElementById('staffReportFrequency')?.value || 'يومي';
+      created.manager = document.getElementById('staffManager')?.value || 'مدير النظام';
+    }
   }
 
   if(modal === 'newTaskModal'){
@@ -1553,7 +1840,9 @@ function save(modal,msg){
       date:value(1) || today,
       cases:Number(value(2) || 0),
       compliance:Number(value(3) || 90),
-      status:'قيد المراجعة'
+      status:'بانتظار الاعتماد',
+      notes:value(4) || '',
+      author:currentUserProfile?.name || document.getElementById('userName')?.textContent || 'عامل ضبط العدوى'
     });
     addAudit('حفظ تقرير يومي');
   }
@@ -1608,6 +1897,7 @@ function exportExcel(){
     XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(dailyReports),'التقارير اليومية');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(incidents),'حالات العدوى');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(checklistTemplates.map(c=>({...c, items:(c.items||[]).join(' | ')}))),'قوائم التحقق');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(reportCatalog),'كتالوج التقارير');
     XLSX.writeFile(wb,'report-'+Date.now()+'.xlsx');
   },500);
 }
