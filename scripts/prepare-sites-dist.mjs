@@ -12,7 +12,9 @@ if (cssHref) {
 }
 
 if (jsSrc) {
-  const js = await readFile(`dist/${jsSrc.replace(/^\//, '')}`, 'utf8');
+  const js = (await readFile(`dist/${jsSrc.replace(/^\//, '')}`, 'utf8'))
+    .replace(/<\/script/gi, '<\\/script')
+    .replace(/<!--/g, '<\\!--');
   html = html.replace(/<script type="module"[^>]+src="[^"]+"><\/script>/, `<script type="module">${js}</script>`);
 }
 
