@@ -2,7 +2,9 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1"
+    "preview": "vite preview --host 127.0.0.1",
+    "start": "node server.js",
+    "check": "node --check server.js && npm run build"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",

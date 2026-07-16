@@ -32,6 +32,7 @@ import "./styles.css";
 
 const storageKey = "hihfad-ipc-suite-v4";
 const sessionKey = "hihfad-ipc-session-v2";
+const apiTokenKey = "hihfad-ipc-api-token-v1";
 const today = new Date().toISOString().slice(0, 10);
 
 const globalChecklistTemplates = [
@@ -444,9 +445,25 @@ function allowedFor(user, item) {
   return !item.department || item.department === user.department;
 }
 
+async function apiRequest(path, options = {}) {
+  const token = sessionStorage.getItem(apiTokenKey);
+  const response = await fetch(path, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
+  });
+  if (!response.ok) throw new Error(`API ${response.status}`);
+  if (response.status === 204) return null;
+  return response.json();
+}
+
 function App() {
   const [data, setData] = useState(loadData);
   const [sessionUserId, setSessionUserId] = useState(() => sessionStorage.getItem(sessionKey));
+  const [apiToken, setApiToken] = useState(() => sessionStorage.getItem(apiTokenKey));
   const user = data.users.find((item) => item.id === sessionUserId && item.status === "نشط");
   const firstView = permissions[user?.role]?.[0] || "dashboard";
   const [view, setView] = useState(firstView);
@@ -469,9 +486,29 @@ function App() {
   function persist(nextData) {
     setData(nextData);
     localStorage.setItem(storageKey, JSON.stringify(nextData));
+    if (apiToken) {
+      apiRequest("/api/state", { method: "POST", body: JSON.stringify({ state: nextData }) }).catch(() => {});
+    }
   }
 
-  function login(username, password) {
+  async function login(username, password) {
+    try {
+      const result = await apiRequest("/api/login", { method: "POST", body: JSON.stringify({ username, password }) });
+      sessionStorage.setItem(apiTokenKey, result.token);
+      sessionStorage.setItem(sessionKey, result.user.id);
+      setApiToken(result.token);
+      if (result.state) {
+        setData(result.state);
+        localStorage.setItem(storageKey, JSON.stringify(result.state));
+      }
+      setSessionUserId(result.user.id);
+      setView(permissions[result.user.role]?.[0] || "dashboard");
+      return true;
+    } catch {
+      sessionStorage.removeItem(apiTokenKey);
+      setApiToken(null);
+    }
+
     const found = data.users.find(
       (item) => item.username.trim().toLowerCase() === username.trim().toLowerCase() && item.password === password && item.status === "نشط"
     );
@@ -483,7 +520,10 @@ function App() {
   }
 
   function logout() {
+    apiRequest("/api/logout", { method: "POST" }).catch(() => {});
+    sessionStorage.removeItem(apiTokenKey);
     sessionStorage.removeItem(sessionKey);
+    setApiToken(null);
     setSessionUserId(null);
   }
 
@@ -683,10 +723,15 @@ function Login({ data, onLogin }) {
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("admin123");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function submit(event) {
+  async function submit(event) {
     event.preventDefault();
-    if (!onLogin(username, password)) setError("اسم المستخدم أو كلمة المرور غير صحيحة.");
+    setLoading(true);
+    setError("");
+    const ok = await onLogin(username, password);
+    setLoading(false);
+    if (!ok) setError("اسم المستخدم أو كلمة المرور غير صحيحة.");
   }
 
   return (
@@ -707,10 +752,10 @@ function Login({ data, onLogin }) {
           <label>اسم المستخدم<input value={username} onChange={(event) => setUsername(event.target.value)} /></label>
           <label>كلمة المرور<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>
           {error && <div className="form-error">{error}</div>}
-          <button className="primary-button">دخول</button>
+          <button className="primary-button" disabled={loading}>{loading ? "جاري التحقق..." : "دخول"}</button>
           <div className="demo-users">
             <strong>حسابات تجريبية</strong>
-            {data.users.slice(0, 3).map((item) => <button type="button" key={item.id} onClick={() => { setUsername(item.username); setPassword(item.password); }}>{item.username} / {item.password}</button>)}
+            {data.users.slice(0, 3).map((item) => <button type="button" key={item.id} onClick={() => { setUsername(item.username); setPassword(item.password || ""); }}>{item.username}{item.password ? ` / ${item.password}` : ""}</button>)}
           </div>
         </form>
       </section>
