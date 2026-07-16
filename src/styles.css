@@ -188,6 +188,20 @@ h1 {
   font-weight: 700;
 }
 
+.secondary-button {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+  color: var(--teal-dark);
+  border-radius: 8px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
 .primary-button:hover {
   background: var(--teal-dark);
 }
@@ -577,5 +591,28 @@ h1 {
 
   .report-side {
     text-align: start;
+  }
+}
+
+@media print {
+  .sidebar,
+  .top-actions,
+  .filters-row,
+  .report-side select {
+    display: none !important;
+  }
+
+  .app-shell,
+  .main,
+  .workspace {
+    display: block;
+    padding: 0;
+  }
+
+  .topbar,
+  .panel,
+  .report-card {
+    box-shadow: none;
+    border-color: #cfd8d5;
   }
 }

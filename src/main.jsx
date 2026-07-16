@@ -357,10 +357,39 @@ function Reports({ data, reports, query, setQuery, facilityFilter, setFacilityFi
       <div className="filters-row compact">
         <div className="search-box"><Search size={18} /><input placeholder="بحث حسب القسم أو الملاحظة..." value={query} onChange={(event) => setQuery(event.target.value)} /></div>
         <div className="select-box"><Filter size={18} /><select value={facilityFilter} onChange={(event) => setFacilityFilter(event.target.value)}><option value="all">كل المنشآت</option>{data.facilities.map((facility) => <option value={facility.id} key={facility.id}>{facility.name}</option>)}</select></div>
+        <button className="secondary-button" onClick={() => exportReports(reports, data)}><FileText size={18} /> تصدير CSV</button>
+        <button className="secondary-button" onClick={() => window.print()}><ClipboardCheck size={18} /> طباعة</button>
       </div>
       <ReportList reports={reports} data={data} updateReportStatus={updateReportStatus} />
     </section>
   );
+}
+
+function exportReports(reports, data) {
+  const headers = ["التاريخ", "المنشأة", "القسم", "النوع", "الأولوية", "الحالة", "النسبة", "العنوان", "الملاحظات", "الإجراءات", "المرسل"];
+  const rows = reports.map((report) => [
+    report.date,
+    data.facilities.find((facility) => facility.id === report.facilityId)?.name || "",
+    report.department,
+    report.type,
+    report.priority,
+    report.status,
+    `${report.score}%`,
+    report.title,
+    report.notes,
+    report.actions,
+    report.author,
+  ]);
+  const csv = [headers, ...rows]
+    .map((row) => row.map((cell) => `"${String(cell ?? "").replaceAll('"', '""')}"`).join(","))
+    .join("\n");
+  const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `ipc-reports-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function ReportList({ reports, data, updateReportStatus }) {
