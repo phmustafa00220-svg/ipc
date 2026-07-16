@@ -40,7 +40,8 @@ body{background:var(--bg);color:var(--text);overflow-x:hidden;transition:.3s}
 .login-page::before{content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(14,165,233,.3),transparent 70%);top:-200px;right:-200px;border-radius:50%;animation:float 8s infinite}
 @keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-30px)}}
 .login-box{background:rgba(255,255,255,.95);backdrop-filter:blur(20px);border-radius:30px;padding:50px;width:450px;max-width:90%;box-shadow:0 30px 80px rgba(0,0,0,.3);position:relative;z-index:10}
-.logo-big{width:90px;height:90px;margin:0 auto 15px;background:var(--gradient);border-radius:25px;display:flex;align-items:center;justify-content:center;font-size:42px;color:white;box-shadow:0 15px 40px rgba(14,165,233,.4);transform:rotate(-5deg);transition:.4s}
+.logo-big{width:104px;height:104px;margin:0 auto 15px;background:white;border-radius:28px;display:flex;align-items:center;justify-content:center;box-shadow:0 15px 40px rgba(14,165,233,.4);transform:rotate(-3deg);transition:.4s;padding:8px}
+.logo-big img{width:100%;height:100%;object-fit:cover;border-radius:22px}
 .logo-big:hover{transform:rotate(0) scale(1.05)}
 .login-box h1{text-align:center;font-size:24px;font-weight:800;margin-bottom:5px}
 .login-box>p{text-align:center;color:var(--gray);font-size:14px;margin-bottom:30px}
@@ -55,9 +56,7 @@ body{background:var(--bg);color:var(--text);overflow-x:hidden;transition:.3s}
 .form-options a{color:var(--primary);text-decoration:none;font-weight:600}
 .btn-login{width:100%;padding:15px;background:var(--gradient);color:white;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;transition:.3s;box-shadow:0 10px 30px rgba(14,165,233,.3);font-family:inherit}
 .btn-login:hover{transform:translateY(-2px);box-shadow:0 15px 40px rgba(14,165,233,.4)}
-.demo{margin-top:20px;padding:15px;background:#f8fafc;border-radius:12px;border:1px dashed var(--border);font-size:12px}
-.demo h4{color:var(--primary);margin-bottom:8px}
-.demo div{display:flex;justify-content:space-between;padding:3px 0;color:var(--gray)}
+.secure-note{margin-top:18px;padding:14px;background:#ecfeff;border:1px solid #a5f3fc;border-radius:14px;color:#0f766e;font-size:13px;text-align:center;font-weight:700}
 
 /* App */
 .app{display:none;min-height:100vh}
@@ -66,7 +65,8 @@ body{background:var(--bg);color:var(--text);overflow-x:hidden;transition:.3s}
 /* Sidebar */
 .sidebar{width:280px;background:var(--dark);color:white;position:fixed;right:0;top:0;height:100vh;overflow-y:auto;z-index:100;box-shadow:-5px 0 30px rgba(0,0,0,.1);transition:.3s}
 .sidebar-header{padding:25px 20px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px}
-.sidebar-header .logo{width:50px;height:50px;background:var(--gradient);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.sidebar-header .logo{width:54px;height:54px;background:white;border-radius:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:5px;box-shadow:0 10px 30px rgba(14,165,233,.25)}
+.sidebar-header .logo img{width:100%;height:100%;object-fit:cover;border-radius:11px}
 .sidebar-header h3{font-size:15px;font-weight:700}
 .sidebar-header p{font-size:11px;color:#94a3b8}
 .sidebar-menu{padding:20px 15px}
@@ -231,9 +231,27 @@ tbody tr:hover{background:var(--bg)}
   .topbar{padding:12px 15px}
   .search-box{display:none}
   .user-info{display:none}
+  .login-box{padding:32px 24px;border-radius:24px}
+  .login-box h1{font-size:20px}
+  .stats-grid{grid-template-columns:1fr}
+  .charts-grid{grid-template-columns:1fr}
 }
 .menu-toggle{display:none;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text)}
 @media(max-width:1024px){.menu-toggle{display:block}}
+
+.mobile-mode .sidebar{transform:translateX(100%)}
+.mobile-mode .sidebar.open{transform:translateX(0)}
+.mobile-mode .main{margin-right:0}
+.mobile-mode .content{padding:14px 12px 86px}
+.mobile-mode .topbar{position:sticky;top:0;padding:10px 12px}
+.mobile-mode .page-header{align-items:flex-start}
+.mobile-mode .page-header h1{font-size:21px}
+.mobile-mode .stat-card,.mobile-mode .card,.mobile-mode .facility-card{border-radius:16px}
+.install-strip{position:fixed;right:18px;bottom:18px;z-index:1500;display:none;gap:10px;align-items:center;background:var(--dark);color:white;border-radius:18px;padding:12px 14px;box-shadow:0 18px 50px rgba(0,0,0,.24);max-width:calc(100vw - 36px)}
+.install-strip.show{display:flex}
+.install-strip button{border:none;border-radius:12px;padding:9px 12px;font-family:inherit;font-weight:800;cursor:pointer}
+.install-strip .install-now{background:var(--secondary);color:white}
+.install-strip .install-close{background:rgba(255,255,255,.12);color:white}
 
 .timeline{position:relative;padding-right:30px}
 .timeline::before{content:'';position:absolute;right:10px;top:0;bottom:0;width:2px;background:var(--border)}
@@ -272,7 +290,7 @@ tbody tr:hover{background:var(--bg)}
 <!-- LOGIN -->
 <div class="login-page" id="loginPage">
   <div class="login-box">
-    <div class="logo-big"><i class="fas fa-shield-virus"></i></div>
+    <div class="logo-big"><img src="/ipc/hihfad-logo.jpg" alt="HIHFAD"></div>
     <h1>نظام ضبط العدوى</h1>
     <p>منظمة يد بيد للإغاثة والتنمية</p>
     <form onsubmit="handleLogin(event)">
@@ -291,31 +309,13 @@ tbody tr:hover{background:var(--bg)}
           <button type="button" class="toggle-pass" onclick="togglePassword()"><i class="fas fa-eye"></i></button>
         </div>
       </div>
-      <div class="form-group">
-        <label>نوع الحساب</label>
-        <div class="input-wrap">
-          <select id="role" required>
-            <option value="">اختر الصلاحية</option>
-            <option value="admin">مدير النظام</option>
-            <option value="supervisor">مشرف ضبط العدوى</option>
-            <option value="officer">مسؤول ضبط العدوى</option>
-            <option value="viewer">مطلع</option>
-          </select>
-          <i class="fas fa-user-shield ic"></i>
-        </div>
-      </div>
       <div class="form-options">
         <label><input type="checkbox" checked> تذكرني</label>
         <a href="#">نسيت كلمة المرور؟</a>
       </div>
       <button type="submit" class="btn-login"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
     </form>
-    <div class="demo">
-      <h4><i class="fas fa-info-circle"></i> حسابات تجريبية</h4>
-      <div><span>مدير النظام:</span><span>admin / 123456</span></div>
-      <div><span>مشرف:</span><span>supervisor / 123456</span></div>
-      <div><span>مسؤول:</span><span>officer / 123456</span></div>
-    </div>
+    <div class="secure-note"><i class="fas fa-shield-halved"></i> دخول آمن للمستخدمين المصرح لهم فقط</div>
     <p style="text-align:center;margin-top:20px;font-size:13px;color:var(--gray)">© 2024 يد بيد للإغاثة والتنمية</p>
   </div>
 </div>
@@ -324,7 +324,7 @@ tbody tr:hover{background:var(--bg)}
 <div class="app" id="app">
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <div class="logo"><i class="fas fa-shield-virus"></i></div>
+      <div class="logo"><img src="/ipc/hihfad-logo.jpg" alt="HIHFAD"></div>
       <div><h3>يد بيد</h3><p>نظام ضبط العدوى</p></div>
     </div>
     <nav class="sidebar-menu">
@@ -364,6 +364,8 @@ tbody tr:hover{background:var(--bg)}
       </div>
       <div class="topbar-left">
         <div class="live-indicator"><span class="live-dot"></span> مباشر</div>
+        <button class="icon-btn" id="installBtn" onclick="installApp()" title="تثبيت التطبيق"><i class="fas fa-download"></i></button>
+        <button class="icon-btn" onclick="toggleMobileMode()" title="وضع الجوال"><i class="fas fa-mobile-screen-button"></i></button>
         <button class="icon-btn" onclick="showToast('لا توجد إشعارات جديدة')"><i class="fas fa-bell"></i><span class="dot"></span></button>
         <div class="theme-toggle" onclick="toggleTheme()" title="تبديل الوضع"></div>
         <div class="user-profile">
@@ -720,6 +722,12 @@ tbody tr:hover{background:var(--bg)}
   </div>
 </div>
 
+<div class="install-strip" id="installStrip">
+  <span><i class="fas fa-mobile-screen-button"></i> ثبّت النظام كتطبيق على الكمبيوتر أو الجوال</span>
+  <button class="install-now" onclick="installApp()">تثبيت</button>
+  <button class="install-close" onclick="dismissInstall()">إخفاء</button>
+</div>
+
 <div class="toast" id="toast">
   <i class="fas fa-check-circle" style="font-size:24px;color:var(--secondary)"></i>
   <div><div style="font-weight:700" id="toastTitle">تم بنجاح</div><div style="font-size:13px;color:var(--text2)" id="toastMsg">تمت العملية</div></div>
@@ -776,6 +784,46 @@ const apiTokenKey = 'hihfad-ipc-api-token-v1';
 let remoteMode = false;
 let supabaseMode = false;
 let supabaseClient = null;
+let installPromptEvent = null;
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/ipc/sw.js').catch(()=>{});
+}
+window.addEventListener('beforeinstallprompt', event => {
+  event.preventDefault();
+  installPromptEvent = event;
+  if(localStorage.getItem('hihfad-install-dismissed') !== 'yes'){
+    document.getElementById('installStrip')?.classList.add('show');
+  }
+});
+window.addEventListener('appinstalled', () => {
+  installPromptEvent = null;
+  document.getElementById('installStrip')?.classList.remove('show');
+  showToast('تم تثبيت التطبيق بنجاح');
+});
+
+async function installApp(){
+  if(installPromptEvent){
+    installPromptEvent.prompt();
+    await installPromptEvent.userChoice;
+    installPromptEvent = null;
+    document.getElementById('installStrip')?.classList.remove('show');
+    return;
+  }
+  showToast('من المتصفح اختر تثبيت التطبيق أو Add to Home screen');
+}
+
+function dismissInstall(){
+  localStorage.setItem('hihfad-install-dismissed','yes');
+  document.getElementById('installStrip')?.classList.remove('show');
+}
+
+function toggleMobileMode(){
+  document.body.classList.toggle('mobile-mode');
+  localStorage.setItem('hihfad-mobile-mode', document.body.classList.contains('mobile-mode') ? 'yes' : 'no');
+  showToast(document.body.classList.contains('mobile-mode') ? 'تم تفعيل وضع الجوال' : 'تم إيقاف وضع الجوال');
+}
+if(localStorage.getItem('hihfad-mobile-mode') === 'yes') document.body.classList.add('mobile-mode');
 
 function getSupabaseClient(){
   const cfg = window.HIHFAD_SUPABASE || {};
@@ -981,8 +1029,8 @@ async function handleLogin(e){
   e.preventDefault();
   const u=document.getElementById('username').value;
   const p=document.getElementById('password').value;
-  const r=document.getElementById('role').value;
-  if(!u||!r){showToast('يرجى ملء جميع الحقول','error');return}
+  const r='admin';
+  if(!u||!p){showToast('يرجى ملء جميع الحقول','error');return}
   const client = getSupabaseClient();
   const loginEmail = u.includes('@') ? u : `${u}@hihfad.local`;
   if(client){

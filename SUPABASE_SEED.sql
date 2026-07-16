@@ -23,7 +23,17 @@ values (
         "status": "نشط"
       }
     ],
-    "users": [],
+    "users": [
+      {
+        "id": "admin",
+        "name": "admin",
+        "username": "admin",
+        "role": "مدير النظام",
+        "facilityId": "all",
+        "department": "الإدارة",
+        "status": "نشط"
+      }
+    ],
     "tasks": [
       {
         "id": "task-1",

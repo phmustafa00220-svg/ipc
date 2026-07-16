@@ -274,7 +274,8 @@ function sendJson(res, status, value) {
 
 function serveStatic(req, res) {
   const requestPath = decodeURIComponent(new URL(req.url, `http://${req.headers.host}`).pathname);
-  const cleanPath = requestPath === "/" ? "/index.html" : requestPath;
+  const normalizedPath = requestPath.startsWith("/ipc/") ? requestPath.slice(4) : requestPath;
+  const cleanPath = normalizedPath === "/" ? "/index.html" : normalizedPath;
   const absolutePath = path.normalize(path.join(publicDir, cleanPath));
   if (!absolutePath.startsWith(publicDir)) {
     res.writeHead(403);
