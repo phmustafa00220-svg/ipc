@@ -10,8 +10,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+window.HIHFAD_SUPABASE = window.HIHFAD_SUPABASE || {
+  url: "",
+  anonKey: ""
+};
+</script>
 <style>
 :root{
   --primary:#0ea5e9;--secondary:#10b981;--danger:#ef4444;--warning:#f59e0b;
@@ -767,6 +774,15 @@ let auditLogs=[
 const appStateKey = 'hihfad-qwen-ipc-state-v1';
 const apiTokenKey = 'hihfad-ipc-api-token-v1';
 let remoteMode = false;
+let supabaseMode = false;
+let supabaseClient = null;
+
+function getSupabaseClient(){
+  const cfg = window.HIHFAD_SUPABASE || {};
+  if(!cfg.url || !cfg.anonKey || !window.supabase) return null;
+  if(!supabaseClient) supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+  return supabaseClient;
+}
 
 function replaceArray(target, items){
   target.splice(0, target.length, ...(items || []));
@@ -786,6 +802,24 @@ function apiRequest(path, options = {}){
     if(response.status === 204) return null;
     return response.json();
   });
+}
+
+async function loadSupabaseState(){
+  const client = getSupabaseClient();
+  if(!client) return null;
+  const { data, error } = await client.from('app_state').select('state').eq('id','main').maybeSingle();
+  if(error) throw error;
+  if(data?.state) return data.state;
+  const initial = snapshotState();
+  await client.from('app_state').upsert({ id:'main', state: initial, updated_at: new Date().toISOString() });
+  return initial;
+}
+
+async function saveSupabaseState(){
+  const client = getSupabaseClient();
+  if(!client) return;
+  const { error } = await client.from('app_state').upsert({ id:'main', state: snapshotState(), updated_at: new Date().toISOString() });
+  if(error) throw error;
 }
 
 function mapServerState(state){
@@ -926,6 +960,9 @@ function restoreUiState(){
 function persistUiState(){
   const saved = { facilities, staff, tasks, dailyReports, incidents, auditLogs };
   localStorage.setItem(appStateKey, JSON.stringify(saved));
+  if(supabaseMode){
+    saveSupabaseState().catch(()=>showToast('تعذر حفظ التغييرات على السيرفر الأونلاين','error'));
+  }
   if(remoteMode){
     apiRequest('/api/state', { method:'POST', body: JSON.stringify({ state: snapshotState() }) }).catch(()=>{});
   }
@@ -946,6 +983,29 @@ async function handleLogin(e){
   const p=document.getElementById('password').value;
   const r=document.getElementById('role').value;
   if(!u||!r){showToast('يرجى ملء جميع الحقول','error');return}
+  const client = getSupabaseClient();
+  if(client && u.includes('@')){
+    try{
+      const { data, error } = await client.auth.signInWithPassword({ email:u, password:p });
+      if(error) throw error;
+      const onlineState = await loadSupabaseState();
+      mapServerState(onlineState);
+      supabaseMode = true;
+      remoteMode = false;
+      const { data: profile } = await client.from('profiles').select('*').eq('id', data.user.id).maybeSingle();
+      document.getElementById('userName').textContent = profile?.name || data.user.email;
+      document.getElementById('userRole').textContent = profile?.role || 'مستخدم';
+      document.getElementById('userAvatar').textContent = (profile?.name || data.user.email || 'U').charAt(0).toUpperCase();
+      document.getElementById('loginPage').style.display='none';
+      document.getElementById('app').classList.add('active');
+      addAudit('تسجيل دخول أونلاين عبر Supabase');
+      showToast('تم تسجيل الدخول أونلاين','success');
+      setTimeout(()=>{initCharts();renderAll()},100);
+      return;
+    }catch(error){
+      showToast('تعذر الدخول الأونلاين، سيتم تجربة الوضع المحلي','error');
+    }
+  }
   try{
     const result = await apiRequest('/api/login', { method:'POST', body: JSON.stringify({ username:u, password:p }) });
     sessionStorage.setItem(apiTokenKey, result.token);
@@ -976,8 +1036,10 @@ function togglePassword(){
 function logout(){
   if(confirm('هل تريد تسجيل الخروج؟')){
     apiRequest('/api/logout', { method:'POST' }).catch(()=>{});
+    getSupabaseClient()?.auth.signOut().catch(()=>{});
     sessionStorage.removeItem(apiTokenKey);
     remoteMode = false;
+    supabaseMode = false;
     document.getElementById('app').classList.remove('active');
     document.getElementById('loginPage').style.display='flex';
   }
