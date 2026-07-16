@@ -1,15 +1,1305 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0f766e" />
-    <meta name="description" content="نظام إدارة ضبط العدوى في المنشآت الصحية - يداً بيد للإغاثة والتنمية" />
-    <link rel="manifest" href="/ipc/manifest.webmanifest" />
-    <title>نظام إدارة ضبط العدوى - يداً بيد</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0ea5e9">
+<meta name="description" content="نظام احترافي لإدارة ضبط العدوى في المنشآت الصحية - يداً بيد للإغاثة والتنمية">
+<link rel="manifest" href="/ipc/manifest.webmanifest">
+<title>نظام ضبط العدوى | يد بيد</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --primary:#0ea5e9;--secondary:#10b981;--danger:#ef4444;--warning:#f59e0b;
+  --dark:#0f172a;--light:#f8fafc;--gray:#64748b;--border:#e2e8f0;
+  --bg:#f1f5f9;--card:#ffffff;--text:#0f172a;--text2:#64748b;
+  --gradient:linear-gradient(135deg,#0ea5e9 0%,#6366f1 100%);
+  --gradient-s:linear-gradient(135deg,#10b981 0%,#06b6d4 100%);
+  --gradient-d:linear-gradient(135deg,#ef4444 0%,#f97316 100%);
+  --gradient-w:linear-gradient(135deg,#f59e0b 0%,#eab308 100%);
+  --shadow:0 10px 40px rgba(14,165,233,.08);
+}
+[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#f8fafc;--text2:#94a3b8;--border:#334155;--light:#1e293b;--shadow:0 10px 40px rgba(0,0,0,.3)}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo',sans-serif}
+body{background:var(--bg);color:var(--text);overflow-x:hidden;transition:.3s}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:var(--primary);border-radius:10px}
+
+/* Login */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0ea5e9 100%);position:relative;overflow:hidden}
+.login-page::before{content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(14,165,233,.3),transparent 70%);top:-200px;right:-200px;border-radius:50%;animation:float 8s infinite}
+@keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-30px)}}
+.login-box{background:rgba(255,255,255,.95);backdrop-filter:blur(20px);border-radius:30px;padding:50px;width:450px;max-width:90%;box-shadow:0 30px 80px rgba(0,0,0,.3);position:relative;z-index:10}
+.logo-big{width:90px;height:90px;margin:0 auto 15px;background:var(--gradient);border-radius:25px;display:flex;align-items:center;justify-content:center;font-size:42px;color:white;box-shadow:0 15px 40px rgba(14,165,233,.4);transform:rotate(-5deg);transition:.4s}
+.logo-big:hover{transform:rotate(0) scale(1.05)}
+.login-box h1{text-align:center;font-size:24px;font-weight:800;margin-bottom:5px}
+.login-box>p{text-align:center;color:var(--gray);font-size:14px;margin-bottom:30px}
+.form-group{margin-bottom:20px;position:relative}
+.form-group label{display:block;margin-bottom:8px;font-weight:600;font-size:14px}
+.input-wrap{position:relative}
+.input-wrap input,.input-wrap select{width:100%;padding:14px 50px 14px 16px;border:2px solid var(--border);border-radius:14px;font-size:15px;background:white;font-family:inherit;transition:.3s}
+.input-wrap input:focus,.input-wrap select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px rgba(14,165,233,.1)}
+.input-wrap .ic{position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--gray);font-size:18px}
+.toggle-pass{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--gray);cursor:pointer;background:none;border:none;font-size:18px}
+.form-options{display:flex;justify-content:space-between;margin-bottom:25px;font-size:14px}
+.form-options a{color:var(--primary);text-decoration:none;font-weight:600}
+.btn-login{width:100%;padding:15px;background:var(--gradient);color:white;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;transition:.3s;box-shadow:0 10px 30px rgba(14,165,233,.3);font-family:inherit}
+.btn-login:hover{transform:translateY(-2px);box-shadow:0 15px 40px rgba(14,165,233,.4)}
+.demo{margin-top:20px;padding:15px;background:#f8fafc;border-radius:12px;border:1px dashed var(--border);font-size:12px}
+.demo h4{color:var(--primary);margin-bottom:8px}
+.demo div{display:flex;justify-content:space-between;padding:3px 0;color:var(--gray)}
+
+/* App */
+.app{display:none;min-height:100vh}
+.app.active{display:flex}
+
+/* Sidebar */
+.sidebar{width:280px;background:var(--dark);color:white;position:fixed;right:0;top:0;height:100vh;overflow-y:auto;z-index:100;box-shadow:-5px 0 30px rgba(0,0,0,.1);transition:.3s}
+.sidebar-header{padding:25px 20px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px}
+.sidebar-header .logo{width:50px;height:50px;background:var(--gradient);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.sidebar-header h3{font-size:15px;font-weight:700}
+.sidebar-header p{font-size:11px;color:#94a3b8}
+.sidebar-menu{padding:20px 15px}
+.menu-sec{margin-bottom:25px}
+.menu-sec-title{font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;margin-bottom:10px;padding:0 10px;letter-spacing:1px}
+.menu-item{display:flex;align-items:center;gap:12px;padding:12px 15px;border-radius:12px;cursor:pointer;transition:.3s;margin-bottom:4px;color:#cbd5e1;font-size:14px;font-weight:500}
+.menu-item:hover{background:rgba(255,255,255,.05);color:white}
+.menu-item.active{background:var(--gradient);color:white;box-shadow:0 8px 20px rgba(14,165,233,.3)}
+.menu-item i{width:20px;font-size:16px}
+.menu-item .badge{margin-right:auto;background:var(--danger);color:white;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700}
+
+/* Main */
+.main{flex:1;margin-right:280px;min-height:100vh;background:var(--bg);transition:.3s}
+.topbar{background:var(--card);padding:15px 30px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 10px rgba(0,0,0,.03);position:sticky;top:0;z-index:50;border-bottom:1px solid var(--border)}
+.topbar-right{display:flex;align-items:center;gap:15px}
+.search-box{position:relative}
+.search-box input{padding:10px 40px 10px 16px;border:2px solid var(--border);border-radius:12px;width:300px;font-size:14px;background:var(--card);color:var(--text);font-family:inherit;transition:.3s}
+.search-box input:focus{outline:none;border-color:var(--primary);width:350px}
+.search-box i{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--gray)}
+.topbar-left{display:flex;align-items:center;gap:15px}
+.icon-btn{width:42px;height:42px;border-radius:12px;background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.3s;position:relative;border:none;color:var(--text);font-size:16px}
+.icon-btn:hover{background:var(--primary);color:white;transform:translateY(-2px)}
+.icon-btn .dot{position:absolute;top:8px;left:8px;width:8px;height:8px;background:var(--danger);border-radius:50%;border:2px solid var(--card)}
+.user-profile{display:flex;align-items:center;gap:12px;padding:6px 15px 6px 6px;background:var(--bg);border-radius:50px;cursor:pointer;transition:.3s}
+.user-profile:hover{background:var(--border)}
+.user-avatar{width:40px;height:40px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+.user-info h4{font-size:13px;font-weight:700;color:var(--text)}
+.user-info p{font-size:11px;color:var(--text2)}
+
+.content{padding:30px}
+.page{display:none;animation:fadeIn .4s}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;flex-wrap:wrap;gap:15px}
+.page-header h1{font-size:26px;font-weight:800;color:var(--text)}
+.page-header p{color:var(--text2);font-size:14px;margin-top:4px}
+
+.btn{padding:10px 20px;border-radius:12px;border:none;cursor:pointer;font-weight:600;font-size:14px;transition:.3s;display:inline-flex;align-items:center;gap:8px;font-family:inherit}
+.btn-primary{background:var(--gradient);color:white;box-shadow:0 8px 20px rgba(14,165,233,.3)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(14,165,233,.4)}
+.btn-secondary{background:var(--card);color:var(--text);border:2px solid var(--border)}
+.btn-secondary:hover{border-color:var(--primary);color:var(--primary)}
+.btn-success{background:var(--gradient-s);color:white}
+.btn-danger{background:var(--gradient-d);color:white}
+.btn-warning{background:var(--gradient-w);color:white}
+.btn-sm{padding:5px 10px;font-size:12px}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-bottom:30px}
+.stat-card{background:var(--card);padding:25px;border-radius:20px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:.3s;border:1px solid transparent}
+.stat-card:hover{transform:translateY(-5px);box-shadow:0 20px 60px rgba(14,165,233,.15);border-color:var(--primary)}
+.stat-card::before{content:'';position:absolute;top:0;right:0;width:100%;height:4px;background:var(--gradient)}
+.stat-card.success::before{background:var(--gradient-s)}
+.stat-card.danger::before{background:var(--gradient-d)}
+.stat-card.warning::before{background:var(--gradient-w)}
+.stat-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px}
+.stat-icon{width:55px;height:55px;border-radius:15px;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:white;font-size:22px}
+.stat-card.success .stat-icon{background:var(--gradient-s)}
+.stat-card.danger .stat-icon{background:var(--gradient-d)}
+.stat-card.warning .stat-icon{background:var(--gradient-w)}
+.stat-trend{font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;display:flex;align-items:center;gap:4px}
+.stat-trend.up{background:rgba(16,185,129,.1);color:var(--secondary)}
+.stat-trend.down{background:rgba(239,68,68,.1);color:var(--danger)}
+.stat-value{font-size:32px;font-weight:800;color:var(--text);margin-bottom:5px}
+.stat-label{color:var(--text2);font-size:14px;font-weight:500}
+.stat-footer{margin-top:15px;padding-top:15px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px;color:var(--text2)}
+
+.card{background:var(--card);border-radius:20px;padding:25px;box-shadow:var(--shadow);margin-bottom:20px}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.card-header h3{font-size:18px;font-weight:700;color:var(--text)}
+
+.charts-grid{display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:20px}
+@media(max-width:1024px){.charts-grid{grid-template-columns:1fr}}
+
+table{width:100%;border-collapse:collapse}
+thead{background:var(--bg)}
+th{padding:15px;text-align:right;font-weight:700;font-size:13px;color:var(--text);border-bottom:2px solid var(--border);text-transform:uppercase;letter-spacing:.5px}
+td{padding:15px;border-bottom:1px solid var(--border);font-size:14px;color:var(--text)}
+tbody tr{transition:.2s}
+tbody tr:hover{background:var(--bg)}
+.status{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;display:inline-block}
+.status.success{background:rgba(16,185,129,.1);color:var(--secondary)}
+.status.danger{background:rgba(239,68,68,.1);color:var(--danger)}
+.status.warning{background:rgba(245,158,11,.1);color:var(--warning)}
+.status.info{background:rgba(14,165,233,.1);color:var(--primary)}
+
+.tasks-list{display:flex;flex-direction:column;gap:12px}
+.task-item{display:flex;align-items:center;gap:15px;padding:15px;background:var(--bg);border-radius:12px;border-right:4px solid var(--primary);transition:.3s}
+.task-item:hover{transform:translateX(-5px)}
+.task-item.high{border-right-color:var(--danger)}
+.task-item.medium{border-right-color:var(--warning)}
+.task-item.low{border-right-color:var(--secondary)}
+.task-check{width:22px;height:22px;border:2px solid var(--border);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.3s;flex-shrink:0}
+.task-check.done{background:var(--secondary);border-color:var(--secondary);color:white}
+.task-content{flex:1}
+.task-title{font-weight:600;font-size:14px;margin-bottom:4px;color:var(--text)}
+.task-meta{display:flex;gap:15px;font-size:12px;color:var(--text2);flex-wrap:wrap}
+.task-meta span{display:flex;align-items:center;gap:4px}
+.priority{padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700}
+.priority.high{background:rgba(239,68,68,.1);color:var(--danger)}
+.priority.medium{background:rgba(245,158,11,.1);color:var(--warning)}
+.priority.low{background:rgba(16,185,129,.1);color:var(--secondary)}
+
+.facilities-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+.facility-card{background:var(--card);border-radius:20px;padding:20px;box-shadow:var(--shadow);transition:.3s;cursor:pointer;border:2px solid transparent}
+.facility-card:hover{transform:translateY(-5px);border-color:var(--primary)}
+.facility-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px}
+.facility-icon{width:55px;height:55px;border-radius:15px;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:white;font-size:22px}
+.facility-card h4{font-size:16px;font-weight:700;margin-bottom:5px;color:var(--text)}
+.facility-card .location{color:var(--text2);font-size:13px;margin-bottom:15px;display:flex;align-items:center;gap:5px}
+.facility-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding-top:15px;border-top:1px solid var(--border)}
+.facility-stat{text-align:center}
+.facility-stat .num{font-size:18px;font-weight:800;color:var(--primary)}
+.facility-stat .lbl{font-size:11px;color:var(--text2)}
+
+.modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.7);backdrop-filter:blur(5px);z-index:1000;align-items:center;justify-content:center;padding:20px}
+.modal.active{display:flex;animation:fadeIn .3s}
+.modal-content{background:var(--card);border-radius:20px;width:600px;max-width:100%;max-height:90vh;overflow-y:auto;animation:slideUp .4s}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-header{padding:20px 25px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.modal-header h3{font-size:18px;font-weight:700;color:var(--text)}
+.modal-close{width:35px;height:35px;border-radius:10px;background:var(--bg);border:none;cursor:pointer;font-size:18px;transition:.3s;color:var(--text)}
+.modal-close:hover{background:var(--danger);color:white;transform:rotate(90deg)}
+.modal-body{padding:25px}
+.modal-footer{padding:15px 25px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px}
+@media(max-width:600px){.form-row{grid-template-columns:1fr}}
+
+.live-indicator{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:rgba(16,185,129,.1);border-radius:20px;font-size:12px;font-weight:700;color:var(--secondary)}
+.live-dot{width:8px;height:8px;background:var(--secondary);border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+
+.filters{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.filter-select{padding:10px 15px;border:2px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:14px;cursor:pointer;font-family:inherit;min-width:150px}
+.filter-select:focus{outline:none;border-color:var(--primary)}
+
+@media print{
+  .sidebar,.topbar,.no-print,.btn,.filters,.page-header>div:last-child{display:none!important}
+  .main{margin:0!important}
+  .content{padding:0!important}
+  .card{box-shadow:none!important;border:1px solid #ddd;page-break-inside:avoid}
+  body{background:white!important;color:black!important}
+  .print-header{display:block!important;text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:3px solid var(--primary)}
+}
+.print-header{display:none}
+
+.alert{padding:15px 20px;border-radius:12px;margin-bottom:15px;display:flex;align-items:center;gap:12px}
+.alert.info{background:rgba(14,165,233,.1);color:var(--primary);border-right:4px solid var(--primary)}
+
+.toast{position:fixed;top:30px;left:30px;background:var(--card);padding:15px 25px;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.15);z-index:2000;display:flex;align-items:center;gap:12px;transform:translateX(-400px);transition:.4s;border-right:4px solid var(--secondary)}
+.toast.show{transform:translateX(0)}
+.toast.error{border-right-color:var(--danger)}
+
+@media(max-width:1024px){
+  .sidebar{transform:translateX(100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-right:0}
+}
+@media(max-width:640px){
+  .content{padding:15px}
+  .topbar{padding:12px 15px}
+  .search-box{display:none}
+  .user-info{display:none}
+}
+.menu-toggle{display:none;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text)}
+@media(max-width:1024px){.menu-toggle{display:block}}
+
+.timeline{position:relative;padding-right:30px}
+.timeline::before{content:'';position:absolute;right:10px;top:0;bottom:0;width:2px;background:var(--border)}
+.timeline-item{position:relative;padding-bottom:20px}
+.timeline-item::before{content:'';position:absolute;right:-24px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--primary);border:3px solid var(--card);box-shadow:0 0 0 2px var(--primary)}
+.timeline-item.success::before{background:var(--secondary);box-shadow:0 0 0 2px var(--secondary)}
+.timeline-item.danger::before{background:var(--danger);box-shadow:0 0 0 2px var(--danger)}
+.timeline-item.warning::before{background:var(--warning);box-shadow:0 0 0 2px var(--warning)}
+.timeline-time{font-size:11px;color:var(--text2);margin-bottom:4px}
+.timeline-content{font-size:14px;font-weight:500;color:var(--text)}
+
+.theme-toggle{width:50px;height:26px;background:var(--border);border-radius:13px;position:relative;cursor:pointer;transition:.3s}
+.theme-toggle::after{content:'';position:absolute;width:22px;height:22px;background:white;border-radius:50%;top:2px;right:2px;transition:.3s;box-shadow:0 2px 5px rgba(0,0,0,.2)}
+[data-theme="dark"] .theme-toggle::after{right:26px}
+[data-theme="dark"] .theme-toggle{background:var(--primary)}
+
+.export-group{display:flex;gap:8px;flex-wrap:wrap}
+.export-btn{padding:8px 15px;border-radius:10px;border:none;cursor:pointer;font-weight:600;font-size:13px;transition:.3s;display:inline-flex;align-items:center;gap:6px;font-family:inherit}
+.export-btn.pdf{background:var(--danger);color:white}
+.export-btn.excel{background:var(--secondary);color:white}
+.export-btn:hover{transform:translateY(-2px);box-shadow:0 5px 15px rgba(0,0,0,.2)}
+
+.tabs{display:flex;gap:5px;background:var(--bg);padding:5px;border-radius:12px;margin-bottom:20px;flex-wrap:wrap}
+.tab{padding:10px 20px;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px;transition:.3s;color:var(--text2);border:none;background:transparent;font-family:inherit}
+.tab.active{background:var(--card);color:var(--primary);box-shadow:0 2px 10px rgba(0,0,0,.05)}
+
+.log-item{display:flex;gap:15px;padding:12px;background:var(--bg);border-radius:10px;margin-bottom:10px}
+.log-icon{width:40px;height:40px;border-radius:10px;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0}
+.log-content{flex:1}
+.log-title{font-weight:600;font-size:14px;color:var(--text);margin-bottom:4px}
+.log-meta{font-size:12px;color:var(--text2)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-page" id="loginPage">
+  <div class="login-box">
+    <div class="logo-big"><i class="fas fa-shield-virus"></i></div>
+    <h1>نظام ضبط العدوى</h1>
+    <p>منظمة يد بيد للإغاثة والتنمية</p>
+    <form onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>اسم المستخدم</label>
+        <div class="input-wrap">
+          <input type="text" id="username" placeholder="أدخل اسم المستخدم" required>
+          <i class="fas fa-user ic"></i>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>كلمة المرور</label>
+        <div class="input-wrap">
+          <input type="password" id="password" placeholder="••••••••" required>
+          <i class="fas fa-lock ic"></i>
+          <button type="button" class="toggle-pass" onclick="togglePassword()"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>نوع الحساب</label>
+        <div class="input-wrap">
+          <select id="role" required>
+            <option value="">اختر الصلاحية</option>
+            <option value="admin">مدير النظام</option>
+            <option value="supervisor">مشرف ضبط العدوى</option>
+            <option value="officer">مسؤول ضبط العدوى</option>
+            <option value="viewer">مطلع</option>
+          </select>
+          <i class="fas fa-user-shield ic"></i>
+        </div>
+      </div>
+      <div class="form-options">
+        <label><input type="checkbox" checked> تذكرني</label>
+        <a href="#">نسيت كلمة المرور؟</a>
+      </div>
+      <button type="submit" class="btn-login"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
+    </form>
+    <div class="demo">
+      <h4><i class="fas fa-info-circle"></i> حسابات تجريبية</h4>
+      <div><span>مدير النظام:</span><span>admin / 123456</span></div>
+      <div><span>مشرف:</span><span>supervisor / 123456</span></div>
+      <div><span>مسؤول:</span><span>officer / 123456</span></div>
+    </div>
+    <p style="text-align:center;margin-top:20px;font-size:13px;color:var(--gray)">© 2024 يد بيد للإغاثة والتنمية</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo"><i class="fas fa-shield-virus"></i></div>
+      <div><h3>يد بيد</h3><p>نظام ضبط العدوى</p></div>
+    </div>
+    <nav class="sidebar-menu">
+      <div class="menu-sec">
+        <div class="menu-sec-title">الرئيسية</div>
+        <div class="menu-item active" onclick="showPage('dashboard',this)"><i class="fas fa-chart-line"></i><span>لوحة التحكم</span></div>
+        <div class="menu-item" onclick="showPage('live',this)"><i class="fas fa-satellite-dish"></i><span>المتابعة اللحظية</span><span class="badge">LIVE</span></div>
+      </div>
+      <div class="menu-sec">
+        <div class="menu-sec-title">الإدارة</div>
+        <div class="menu-item" onclick="showPage('facilities',this)"><i class="fas fa-hospital"></i><span>المرافق الصحية</span></div>
+        <div class="menu-item" onclick="showPage('staff',this)"><i class="fas fa-user-md"></i><span>الموظفون</span></div>
+        <div class="menu-item" onclick="showPage('tasks',this)"><i class="fas fa-tasks"></i><span>المهام</span><span class="badge">12</span></div>
+      </div>
+      <div class="menu-sec">
+        <div class="menu-sec-title">التقارير</div>
+        <div class="menu-item" onclick="showPage('daily',this)"><i class="fas fa-calendar-day"></i><span>التقارير اليومية</span></div>
+        <div class="menu-item" onclick="showPage('weekly',this)"><i class="fas fa-calendar-week"></i><span>التقارير الأسبوعية</span></div>
+        <div class="menu-item" onclick="showPage('monthly',this)"><i class="fas fa-calendar-alt"></i><span>التقارير الشهرية</span></div>
+        <div class="menu-item" onclick="showPage('incidents',this)"><i class="fas fa-exclamation-triangle"></i><span>حالات العدوى</span></div>
+      </div>
+      <div class="menu-sec">
+        <div class="menu-sec-title">النظام</div>
+        <div class="menu-item" onclick="showPage('users',this)"><i class="fas fa-users-cog"></i><span>المستخدمون</span></div>
+        <div class="menu-item" onclick="showPage('audit',this)"><i class="fas fa-history"></i><span>سجل النشاطات</span></div>
+        <div class="menu-item" onclick="showPage('settings',this)"><i class="fas fa-cog"></i><span>الإعدادات</span></div>
+        <div class="menu-item" onclick="logout()" style="color:#ef4444"><i class="fas fa-sign-out-alt"></i><span>تسجيل الخروج</span></div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-right">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="search-box"><input type="text" placeholder="ابحث في النظام..."><i class="fas fa-search"></i></div>
+      </div>
+      <div class="topbar-left">
+        <div class="live-indicator"><span class="live-dot"></span> مباشر</div>
+        <button class="icon-btn" onclick="showToast('لا توجد إشعارات جديدة')"><i class="fas fa-bell"></i><span class="dot"></span></button>
+        <div class="theme-toggle" onclick="toggleTheme()" title="تبديل الوضع"></div>
+        <div class="user-profile">
+          <div class="user-info"><h4 id="userName">أحمد محمد</h4><p id="userRole">مدير النظام</p></div>
+          <div class="user-avatar" id="userAvatar">أ</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="print-header">
+        <h1>منظمة يد بيد للإغاثة والتنمية</h1>
+        <h2>نظام ضبط العدوى - تقرير رسمي</h2>
+        <p id="printDate"></p>
+      </div>
+
+      <!-- Dashboard -->
+      <div class="page active" id="dashboard">
+        <div class="page-header">
+          <div><h1>لوحة التحكم الرئيسية</h1><p>نظرة شاملة على حالة ضبط العدوى</p></div>
+          <div class="export-group">
+            <button class="export-btn pdf" onclick="exportPDF('dashboard')"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button class="export-btn excel" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+            <button class="btn btn-secondary" onclick="window.print()"><i class="fas fa-print"></i> طباعة</button>
+            <button class="btn btn-primary" onclick="openModal('newReportModal')"><i class="fas fa-plus"></i> تقرير جديد</button>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-header"><div class="stat-icon"><i class="fas fa-hospital"></i></div><div class="stat-trend up"><i class="fas fa-arrow-up"></i> 12%</div></div>
+            <div class="stat-value">24</div><div class="stat-label">إجمالي المرافق الصحية</div>
+            <div class="stat-footer"><span><i class="fas fa-hospital-user"></i> 8 مستشفيات</span><span><i class="fas fa-clinic-medical"></i> 16 مركز</span></div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-card-header"><div class="stat-icon"><i class="fas fa-user-md"></i></div><div class="stat-trend up"><i class="fas fa-arrow-up"></i> 8%</div></div>
+            <div class="stat-value">156</div><div class="stat-label">مسؤول ضبط العدوى</div>
+            <div class="stat-footer"><span><i class="fas fa-check-circle"></i> 142 نشط</span><span><i class="fas fa-clock"></i> 14 إجازة</span></div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-card-header"><div class="stat-icon"><i class="fas fa-tasks"></i></div><div class="stat-trend down"><i class="fas fa-arrow-down"></i> 5%</div></div>
+            <div class="stat-value">87</div><div class="stat-label">مهام قيد التنفيذ</div>
+            <div class="stat-footer"><span><i class="fas fa-exclamation-circle"></i> 23 عاجلة</span><span><i class="fas fa-hourglass-half"></i> 64 عادية</span></div>
+          </div>
+          <div class="stat-card danger">
+            <div class="stat-card-header"><div class="stat-icon"><i class="fas fa-virus"></i></div><div class="stat-trend down"><i class="fas fa-arrow-down"></i> 18%</div></div>
+            <div class="stat-value">12</div><div class="stat-label">حالات عدوى مسجلة</div>
+            <div class="stat-footer"><span><i class="fas fa-check"></i> 8 تم حلها</span><span><i class="fas fa-spinner"></i> 4 متابعة</span></div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="card">
+            <div class="card-header"><h3><i class="fas fa-chart-area" style="color:var(--primary)"></i> إحصائيات ضبط العدوى</h3></div>
+            <canvas id="mainChart" height="100"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3><i class="fas fa-chart-pie" style="color:var(--primary)"></i> توزيع الحالات</h3></div>
+            <canvas id="pieChart" height="200"></canvas>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="card">
+            <div class="card-header"><h3><i class="fas fa-history" style="color:var(--primary)"></i> النشاط الأخير</h3></div>
+            <div class="timeline">
+              <div class="timeline-item success"><div class="timeline-time">منذ 5 دقائق</div><div class="timeline-content">تم رفع تقرير يومي من مستشفى الأمل</div></div>
+              <div class="timeline-item warning"><div class="timeline-time">منذ 23 دقيقة</div><div class="timeline-content">تنبيه: ارتفاع معدل العدوى في مركز النور</div></div>
+              <div class="timeline-item"><div class="timeline-time">منذ ساعة</div><div class="timeline-content">تم تعيين مهمة جديدة للدكتور خالد</div></div>
+              <div class="timeline-item danger"><div class="timeline-time">منذ 3 ساعات</div><div class="timeline-content">حالة عدوى جديدة مسجلة في مستشفى الرحمة</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3><i class="fas fa-tasks" style="color:var(--primary)"></i> المهام العاجلة</h3></div>
+            <div class="tasks-list" id="urgentTasks"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live -->
+      <div class="page" id="live">
+        <div class="page-header"><div><h1>المتابعة اللحظية <span class="live-indicator" style="font-size:12px;vertical-align:middle"><span class="live-dot"></span> مباشر</span></h1><p>مراقبة مباشرة لحالة ضبط العدوى</p></div></div>
+        <div class="alert info"><i class="fas fa-info-circle" style="font-size:20px"></i><div>يتم تحديث البيانات كل 10 ثوانٍ تلقائياً</div></div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-card-header"><div class="stat-icon"><i class="fas fa-hospital-alt"></i></div></div><div class="stat-value">24/24</div><div class="stat-label">مرافق متصلة</div></div>
+          <div class="stat-card success"><div class="stat-card-header"><div class="stat-icon"><i class="fas fa-check-double"></i></div></div><div class="stat-value">98.5%</div><div class="stat-label">معدل الالتزام</div></div>
+          <div class="stat-card warning"><div class="stat-card-header"><div class="stat-icon"><i class="fas fa-bell"></i></div></div><div class="stat-value">3</div><div class="stat-label">تنبيهات نشطة</div></div>
+          <div class="stat-card danger"><div class="stat-card-header"><div class="stat-icon"><i class="fas fa-exclamation"></i></div></div><div class="stat-value">1</div><div class="stat-label">حالة طارئة</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3><i class="fas fa-stream" style="color:var(--primary)"></i> البث المباشر</h3></div>
+          <div class="timeline" id="liveTimeline"></div>
+        </div>
+      </div>
+
+      <!-- Facilities -->
+      <div class="page" id="facilities">
+        <div class="page-header">
+          <div><h1>المرافق الصحية</h1><p>إدارة جميع المرافق الصحية</p></div>
+          <div class="export-group">
+            <button class="export-btn pdf" onclick="exportPDF('facilities')"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button class="export-btn excel" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+            <button class="btn btn-primary" onclick="openModal('newFacilityModal')"><i class="fas fa-plus"></i> إضافة مرفق</button>
+          </div>
+        </div>
+        <div class="facilities-grid" id="facilitiesGrid"></div>
+      </div>
+
+      <!-- Staff -->
+      <div class="page" id="staff">
+        <div class="page-header">
+          <div><h1>الموظفون</h1><p>إدارة مسؤولي ضبط العدوى</p></div>
+          <div class="export-group">
+            <button class="export-btn pdf" onclick="exportPDF('staff')"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button class="export-btn excel" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+            <button class="btn btn-primary" onclick="openModal('newStaffModal')"><i class="fas fa-plus"></i> إضافة موظف</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>قائمة الموظفين</h3></div>
+          <div style="overflow-x:auto"><table><thead><tr><th>الاسم</th><th>المنصب</th><th>المرفق</th><th>الهاتف</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody id="staffTable"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- Tasks -->
+      <div class="page" id="tasks">
+        <div class="page-header">
+          <div><h1>المهام</h1><p>إدارة ومتابعة المهام</p></div>
+          <div class="export-group">
+            <button class="export-btn pdf" onclick="exportPDF('tasks')"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button class="export-btn excel" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+            <button class="btn btn-primary" onclick="openModal('newTaskModal')"><i class="fas fa-plus"></i> مهمة جديدة</button>
+          </div>
+        </div>
+        <div class="tabs">
+          <button class="tab active" onclick="filterTasks('all',this)">الكل</button>
+          <button class="tab" onclick="filterTasks('pending',this)">قيد التنفيذ</button>
+          <button class="tab" onclick="filterTasks('done',this)">مكتملة</button>
+        </div>
+        <div class="card"><div class="tasks-list" id="tasksList"></div></div>
+      </div>
+
+      <!-- Daily -->
+      <div class="page" id="daily">
+        <div class="page-header">
+          <div><h1>التقارير اليومية</h1><p>تقارير ضبط العدوى اليومية</p></div>
+          <div class="export-group">
+            <button class="export-btn pdf" onclick="exportPDF('daily')"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button class="export-btn excel" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+            <button class="btn btn-secondary" onclick="window.print()"><i class="fas fa-print"></i> طباعة</button>
+            <button class="btn btn-primary" onclick="openModal('newReportModal')"><i class="fas fa-plus"></i> تقرير جديد</button>
+          </div>
+        </div>
+        <div class="card"><div style="overflow-x:auto"><table><thead><tr><th>رقم التقرير</th><th>المرفق</th><th>التاريخ</th><th>الحالات</th><th>الالتزام</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody id="dailyTable"></tbody></table></div></div>
+      </div>
+
+      <!-- Weekly -->
+      <div class="page" id="weekly">
+        <div class="page-header">
+          <div><h1>التقارير الأسبوعية</h1><p>ملخص أسبوعي لأداء ضبط العدوى</p></div>
+          <div class="export-group">
+            <button class="export-btn pdf" onclick="exportPDF('weekly')"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button class="export-btn excel" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+            <button class="btn btn-secondary" onclick="window.print()"><i class="fas fa-print"></i> طباعة</button>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card success"><div class="stat-card-header"><div class="stat-icon"><i class="fas fa-chart-line"></i></div></div><div class="stat-value">94.2%</div><div class="stat-label">متوسط الالتزام</div></div>
+          <div class="stat-card"><div class="stat-card-header"><div class="stat-icon"><i class="fas fa-file-alt"></i></div></div><div class="stat-value">168</div><div class="stat-label">تقارير مقدمة</div></div>
+          <div class="stat-card warning"><div class="stat-card-header"><div class="stat-icon"><i class="fas fa-tasks"></i></div></div><div class="stat-value">312</div><div class="stat-label">مهام منفذة</div></div>
+          <div class="stat-card danger"><div class="stat-card-header"><div class="stat-icon"><i class="fas fa-virus"></i></div></div><div class="stat-value">28</div><div class="stat-label">حالات عدوى</div></div>
+        </div>
+        <div class="card"><div class="card-header"><h3><i class="fas fa-chart-bar" style="color:var(--primary)"></i> الأداء الأسبوعي</h3></div><canvas id="weeklyChart" height="80"></canvas></div>
+      </div>
+
+      <!-- Monthly -->
+      <div class="page" id="monthly">
+        <div class="page-header">
+          <div><h1>التقارير الشهرية</h1><p>تحليل شامل للأداء الشهري</p></div>
+          <div class="export-group">
+            <button class="export-btn pdf" onclick="exportPDF('monthly')"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button class="export-btn excel" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+            <button class="btn btn-secondary" onclick="window.print()"><i class="fas fa-print"></i> طباعة</button>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card success"><div class="stat-card-header"><div class="stat-icon"><i class="fas fa-percentage"></i></div></div><div class="stat-value">96.8%</div><div class="stat-label">معدل الالتزام الشهري</div></div>
+          <div class="stat-card"><div class="stat-card-header"><div class="stat-icon"><i class="fas fa-file-alt"></i></div></div><div class="stat-value">720</div><div class="stat-label">إجمالي التقارير</div></div>
+          <div class="stat-card warning"><div class="stat-card-header"><div class="stat-icon"><i class="fas fa-users"></i></div></div><div class="stat-value">1,245</div><div class="stat-label">مهام منفذة</div></div>
+          <div class="stat-card danger"><div class="stat-card-header"><div class="stat-icon"><i class="fas fa-virus-slash"></i></div></div><div class="stat-value">-22%</div><div class="stat-label">انخفاض العدوى</div></div>
+        </div>
+        <div class="charts-grid">
+          <div class="card"><div class="card-header"><h3><i class="fas fa-chart-area" style="color:var(--primary)"></i> الأداء الشهري</h3></div><canvas id="monthlyChart" height="100"></canvas></div>
+          <div class="card"><div class="card-header"><h3><i class="fas fa-chart-pie" style="color:var(--primary)"></i> التوزيع</h3></div><canvas id="monthlyPieChart" height="200"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Incidents -->
+      <div class="page" id="incidents">
+        <div class="page-header">
+          <div><h1>حالات العدوى</h1><p>تتبع حالات العدوى</p></div>
+          <div class="export-group">
+            <button class="export-btn pdf" onclick="exportPDF('incidents')"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button class="export-btn excel" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+            <button class="btn btn-danger" onclick="openModal('newIncidentModal')"><i class="fas fa-plus"></i> تسجيل حالة</button>
+          </div>
+        </div>
+        <div class="card"><div style="overflow-x:auto"><table><thead><tr><th>رقم الحالة</th><th>النوع</th><th>المرفق</th><th>التاريخ</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody id="incidentsTable"></tbody></table></div></div>
+      </div>
+
+      <!-- Users -->
+      <div class="page" id="users">
+        <div class="page-header"><div><h1>المستخدمون</h1><p>إدارة الحسابات والصلاحيات</p></div><button class="btn btn-primary" onclick="openModal('newStaffModal')"><i class="fas fa-plus"></i> مستخدم جديد</button></div>
+        <div class="card"><div style="overflow-x:auto"><table><thead><tr><th>المستخدم</th><th>البريد</th><th>الصلاحية</th><th>آخر دخول</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
+          <tbody>
+            <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="user-avatar" style="width:35px;height:35px;font-size:13px">أ</div><div><div style="font-weight:600">أحمد محمد</div><div style="font-size:12px;color:var(--text2)">مدير النظام</div></div></div></td><td>admin@yadbyad.org</td><td><span class="status info">مدير</span></td><td>الآن</td><td><span class="status success">نشط</span></td><td><button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button></td></tr>
+            <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="user-avatar" style="width:35px;height:35px;font-size:13px;background:var(--gradient-s)">خ</div><div><div style="font-weight:600">خالد عبدالله</div><div style="font-size:12px;color:var(--text2)">مشرف</div></div></div></td><td>khaled@yadbyad.org</td><td><span class="status warning">مشرف</span></td><td>منذ ساعة</td><td><span class="status success">نشط</span></td><td><button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button></td></tr>
+            <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="user-avatar" style="width:35px;height:35px;font-size:13px;background:var(--gradient-w)">س</div><div><div style="font-weight:600">سارة أحمد</div><div style="font-size:12px;color:var(--text2)">مسؤول</div></div></div></td><td>sara@yadbyad.org</td><td><span class="status success">مسؤول</span></td><td>منذ 3 ساعات</td><td><span class="status success">نشط</span></td><td><button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button></td></tr>
+          </tbody></table></div></div>
+      </div>
+
+      <!-- Audit -->
+      <div class="page" id="audit">
+        <div class="page-header"><div><h1>سجل النشاطات</h1><p>تتبع جميع العمليات</p></div><button class="export-btn excel" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Excel</button></div>
+        <div class="card"><div class="card-header"><h3>آخر النشاطات</h3></div><div id="auditLog"></div></div>
+      </div>
+
+      <!-- Settings -->
+      <div class="page" id="settings">
+        <div class="page-header"><div><h1>الإعدادات</h1><p>إعدادات النظام</p></div></div>
+        <div class="card">
+          <div class="card-header"><h3>الإعدادات العامة</h3></div>
+          <div class="form-row">
+            <div class="form-group"><label>اسم المنظمة</label><input type="text" value="يد بيد للإغاثة والتنمية"></div>
+            <div class="form-group"><label>البريد الإلكتروني</label><input type="email" value="info@yadbyad.org"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>اللغة</label><select><option>العربية</option><option>English</option></select></div>
+            <div class="form-group"><label>المنطقة الزمنية</label><select><option>توقيت اليمن (GMT+3)</option></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>الوضع الليلي</label><div class="theme-toggle" onclick="toggleTheme()" style="margin-top:10px"></div></div>
+            <div class="form-group"><label>الإشعارات</label><select><option>مفعلة</option><option>معطلة</option></select></div>
+          </div>
+          <button class="btn btn-primary"><i class="fas fa-save"></i> حفظ التغييرات</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Modals -->
+<div class="modal" id="newReportModal">
+  <div class="modal-content">
+    <div class="modal-header"><h3>تقرير ضبط عدوى جديد</h3><button class="modal-close" onclick="closeModal('newReportModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>المرفق الصحي</label><select><option>مستشفى الأمل</option><option>مركز النور</option><option>مستشفى الرحمة</option></select></div>
+        <div class="form-group"><label>التاريخ</label><input type="date"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>عدد الحالات</label><input type="number" placeholder="0"></div>
+        <div class="form-group"><label>نسبة الالتزام %</label><input type="number" placeholder="100"></div>
+      </div>
+      <div class="form-group"><label>الملاحظات</label><textarea style="width:100%;padding:12px;border:2px solid var(--border);border-radius:12px;min-height:100px;font-family:inherit;background:var(--card);color:var(--text)" placeholder="اكتب الملاحظات..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('newReportModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="save('newReportModal','تم حفظ التقرير')"><i class="fas fa-save"></i> حفظ</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="newFacilityModal">
+  <div class="modal-content">
+    <div class="modal-header"><h3>إضافة مرفق صحي</h3><button class="modal-close" onclick="closeModal('newFacilityModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>اسم المرفق</label><input type="text" placeholder="مثال: مستشفى الأمل"></div>
+        <div class="form-group"><label>نوع المرفق</label><select><option>مستشفى</option><option>مستوصف</option><option>مركز صحي</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>المنطقة</label><input type="text" placeholder="المدينة/المحافظة"></div>
+        <div class="form-group"><label>الهاتف</label><input type="tel" placeholder="+967..."></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('newFacilityModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="save('newFacilityModal','تم إضافة المرفق')"><i class="fas fa-save"></i> حفظ</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="newStaffModal">
+  <div class="modal-content">
+    <div class="modal-header"><h3>إضافة موظف جديد</h3><button class="modal-close" onclick="closeModal('newStaffModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>الاسم الكامل</label><input type="text" placeholder="الاسم الرباعي"></div>
+        <div class="form-group"><label>المنصب</label><select><option>مسؤول ضبط عدوى</option><option>مشرف</option><option>ممرض</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>المرفق</label><select><option>مستشفى الأمل</option><option>مركز النور</option></select></div>
+        <div class="form-group"><label>رقم الهاتف</label><input type="tel" placeholder="+967..."></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('newStaffModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="save('newStaffModal','تم إضافة الموظف')"><i class="fas fa-save"></i> حفظ</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="newTaskModal">
+  <div class="modal-content">
+    <div class="modal-header"><h3>مهمة جديدة</h3><button class="modal-close" onclick="closeModal('newTaskModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>عنوان المهمة</label><input type="text" placeholder="وصف مختصر"></div>
+      <div class="form-row">
+        <div class="form-group"><label>المسؤول</label><select><option>أحمد محمد</option><option>خالد عبدالله</option></select></div>
+        <div class="form-group"><label>الأولوية</label><select><option value="high">عاجل</option><option value="medium">متوسط</option><option value="low">عادي</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>تاريخ البدء</label><input type="date"></div>
+        <div class="form-group"><label>تاريخ الانتهاء</label><input type="date"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('newTaskModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="save('newTaskModal','تم إنشاء المهمة')"><i class="fas fa-save"></i> حفظ</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="newIncidentModal">
+  <div class="modal-content">
+    <div class="modal-header"><h3>تسجيل حالة عدوى</h3><button class="modal-close" onclick="closeModal('newIncidentModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>نوع العدوى</label><select><option>عدوى مستشفية</option><option>عدوى جراحية</option><option>عدوى دم</option></select></div>
+        <div class="form-group"><label>المرفق</label><select><option>مستشفى الأمل</option><option>مركز النور</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>تاريخ الحدوث</label><input type="date"></div>
+        <div class="form-group"><label>درجة الخطورة</label><select><option>منخفضة</option><option>متوسطة</option><option>عالية</option></select></div>
+      </div>
+      <div class="form-group"><label>التفاصيل</label><textarea style="width:100%;padding:12px;border:2px solid var(--border);border-radius:12px;min-height:100px;font-family:inherit;background:var(--card);color:var(--text)" placeholder="وصف الحالة..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('newIncidentModal')">إلغاء</button>
+      <button class="btn btn-danger" onclick="save('newIncidentModal','تم تسجيل الحالة')"><i class="fas fa-exclamation-triangle"></i> تسجيل</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <i class="fas fa-check-circle" style="font-size:24px;color:var(--secondary)"></i>
+  <div><div style="font-weight:700" id="toastTitle">تم بنجاح</div><div style="font-size:13px;color:var(--text2)" id="toastMsg">تمت العملية</div></div>
+</div>
+
+<script>
+// Data
+const facilities=[
+  {name:'مستشفى الأمل',type:'مستشفى',location:'صنعاء',staff:12,beds:120,compliance:96,status:'نشط',icon:'hospital'},
+  {name:'مركز النور الصحي',type:'مركز صحي',location:'عدن',staff:8,beds:45,compliance:92,status:'نشط',icon:'clinic-medical'},
+  {name:'مستشفى الرحمة',type:'مستشفى',location:'تعز',staff:15,beds:180,compliance:88,status:'نشط',icon:'hospital'},
+  {name:'مستوصف السلام',type:'مستوصف',location:'الحديدة',staff:6,beds:30,compliance:94,status:'نشط',icon:'user-md'},
+  {name:'مركز الحياة',type:'مركز صحي',location:'إب',staff:7,beds:40,compliance:91,status:'نشط',icon:'clinic-medical'},
+  {name:'مستشفى الخير',type:'مستشفى',location:'ذمار',staff:14,beds:150,compliance:95,status:'نشط',icon:'hospital'}
+];
+
+const staff=[
+  {name:'د. أحمد محمد',role:'مشرف ضبط عدوى',facility:'مستشفى الأمل',phone:'+967 777 123 456',status:'نشط'},
+  {name:'د. خالد عبدالله',role:'مسؤول ضبط عدوى',facility:'مركز النور',phone:'+967 777 234 567',status:'نشط'},
+  {name:'د. سارة أحمد',role:'مسؤول ضبط عدوى',facility:'مستشفى الرحمة',phone:'+967 777 345 678',status:'نشط'},
+  {name:'د. محمد علي',role:'مسؤول ضبط عدوى',facility:'مستوصف السلام',phone:'+967 777 456 789',status:'إجازة'},
+  {name:'د. فاطمة حسن',role:'مشرف ضبط عدوى',facility:'مركز الحياة',phone:'+967 777 567 890',status:'نشط'}
+];
+
+let tasks=[
+  {title:'فحص تعقيم الأدوات - مستشفى الأمل',assignee:'د. أحمد محمد',date:'اليوم 2:00 م',priority:'high',done:false},
+  {title:'تقرير حالة العدوى - مركز النور',assignee:'د. خالد عبدالله',date:'اليوم 4:00 م',priority:'high',done:false},
+  {title:'اجتماع فريق ضبط العدوى',assignee:'جميع الفريق',date:'غداً 10:00 ص',priority:'medium',done:false},
+  {title:'تدريب الموظفين الجدد',assignee:'د. فاطمة حسن',date:'بعد غد',priority:'low',done:false},
+  {title:'مراجعة بروتوكولات النظافة',assignee:'د. سارة أحمد',date:'الأسبوع القادم',priority:'medium',done:true}
+];
+
+const dailyReports=[
+  {id:'RPT-2024-001',facility:'مستشفى الأمل',date:'2024-01-15',cases:2,compliance:96,status:'معتمد'},
+  {id:'RPT-2024-002',facility:'مركز النور',date:'2024-01-15',cases:1,compliance:92,status:'معتمد'},
+  {id:'RPT-2024-003',facility:'مستشفى الرحمة',date:'2024-01-15',cases:3,compliance:88,status:'قيد المراجعة'},
+  {id:'RPT-2024-004',facility:'مستوصف السلام',date:'2024-01-15',cases:0,compliance:94,status:'معتمد'}
+];
+
+const incidents=[
+  {id:'INC-2024-001',type:'عدوى مستشفية',facility:'مستشفى الرحمة',date:'2024-01-14',status:'نشطة'},
+  {id:'INC-2024-002',type:'عدوى جراحية',facility:'مستشفى الأمل',date:'2024-01-13',status:'قيد التحقيق'},
+  {id:'INC-2024-003',type:'عدوى دم',facility:'مركز النور',date:'2024-01-12',status:'مغلقة'}
+];
+
+let auditLogs=[
+  {user:'أحمد محمد',action:'تسجيل دخول',time:'2024-01-15 14:30',icon:'sign-in-alt'},
+  {user:'خالد عبدالله',action:'إنشاء تقرير يومي',time:'2024-01-15 14:25',icon:'file-alt'},
+  {user:'سارة أحمد',action:'تعديل بيانات مرفق',time:'2024-01-15 14:20',icon:'edit'}
+];
+
+const appStateKey = 'hihfad-qwen-ipc-state-v1';
+const apiTokenKey = 'hihfad-ipc-api-token-v1';
+let remoteMode = false;
+
+function replaceArray(target, items){
+  target.splice(0, target.length, ...(items || []));
+}
+
+function apiRequest(path, options = {}){
+  const token = sessionStorage.getItem(apiTokenKey);
+  return fetch(path, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {})
+    }
+  }).then(async response => {
+    if(!response.ok) throw new Error('API '+response.status);
+    if(response.status === 204) return null;
+    return response.json();
+  });
+}
+
+function mapServerState(state){
+  if(!state) return;
+  replaceArray(facilities, (state.facilities || []).map(f => ({
+    id: f.id,
+    name: f.name,
+    type: f.type || 'مرفق صحي',
+    location: f.city || f.location || 'غير محدد',
+    staff: (state.users || []).filter(u => !f.id || u.facilityId === f.id).length || 1,
+    beds: f.beds || 0,
+    compliance: Math.round(((state.reports || []).filter(r => r.facilityId === f.id).reduce((s,r)=>s+Number(r.score || 0),0) || 90) / Math.max((state.reports || []).filter(r => r.facilityId === f.id).length, 1)),
+    status: f.status || 'نشط',
+    icon: (f.type || '').includes('مشفى') || (f.type || '').includes('مستشفى') ? 'hospital' : 'clinic-medical'
+  })));
+  replaceArray(staff, (state.users || []).map(u => ({
+    id: u.id,
+    name: u.name,
+    username: u.username,
+    role: u.role,
+    facility: facilityNameById(u.facilityId, state),
+    phone: u.phone || '-',
+    status: u.status || 'نشط'
+  })));
+  tasks = (state.tasks || []).map(t => ({
+    id: t.id,
+    title: t.title,
+    assignee: userNameById(t.assignedTo, state) || t.assignedTo || 'غير محدد',
+    date: t.dueDate || t.date || 'اليوم',
+    priority: t.priority === 'عال' ? 'high' : t.priority === 'متوسط' ? 'medium' : 'low',
+    done: t.status === 'مغلقة' || t.status === 'مكتملة'
+  }));
+  replaceArray(dailyReports, (state.reports || []).map(r => ({
+    id: r.id,
+    facility: facilityNameById(r.facilityId, state),
+    date: r.date,
+    cases: r.cases || (r.priority === 'عال' ? 1 : 0),
+    compliance: Number(r.score || 0),
+    status: r.status || 'جديد'
+  })));
+  replaceArray(incidents, (state.incidents || []).map(i => ({
+    id: i.id,
+    type: i.type,
+    facility: facilityNameById(i.facilityId, state),
+    date: i.date,
+    status: i.status || 'نشطة'
+  })));
+}
+
+function facilityNameById(id, state){
+  if(id === 'all') return 'كل المنشآت';
+  return (state.facilities || []).find(f => f.id === id)?.name || id || 'غير محدد';
+}
+
+function userNameById(id, state){
+  return (state.users || []).find(u => u.id === id)?.name || id;
+}
+
+function snapshotState(){
+  const now = new Date().toISOString().slice(0,10);
+  const stateFacilities = facilities.map((f, index) => ({
+    id: f.id || `facility-${index+1}`,
+    name: f.name,
+    city: f.location,
+    type: f.type,
+    departments: ['الإدارة','التمريض','التعقيم','الإسعاف'],
+    riskLevel: f.compliance < 85 ? 'عال' : f.compliance < 93 ? 'متوسط' : 'منخفض',
+    status: f.status || 'نشط'
+  }));
+  return {
+    organization: 'يداً بيد للإغاثة والتنمية',
+    facilities: stateFacilities,
+    users: staff.map((s, index) => ({
+      id: s.id || `user-${index+1}`,
+      name: s.name,
+      username: s.username || (s.name || `user${index+1}`).replace(/\s+/g,'.').toLowerCase(),
+      ...(s.password ? { password: s.password } : {}),
+      role: s.role || 'عامل صحي',
+      facilityId: stateFacilities.find(f => f.name === s.facility)?.id || 'all',
+      department: 'ضبط العدوى',
+      status: s.status || 'نشط'
+    })),
+    tasks: tasks.map((t, index) => ({
+      id: t.id || `task-${index+1}`,
+      title: t.title,
+      assignedTo: t.assignee,
+      dueDate: t.date || now,
+      priority: t.priority === 'high' ? 'عال' : t.priority === 'medium' ? 'متوسط' : 'منخفض',
+      status: t.done ? 'مغلقة' : 'مفتوحة',
+      description: t.title
+    })),
+    reports: dailyReports.map((r, index) => ({
+      id: r.id || `report-${index+1}`,
+      date: r.date || now,
+      facilityId: stateFacilities.find(f => f.name === r.facility)?.id || stateFacilities[0]?.id,
+      department: 'ضبط العدوى',
+      authorId: 'u-admin',
+      type: 'تقرير يومي',
+      priority: Number(r.compliance || 0) < 80 ? 'عال' : 'متوسط',
+      status: r.status,
+      score: Number(r.compliance || 0),
+      title: `تقرير ${r.facility || ''}`,
+      notes: `عدد الحالات: ${r.cases || 0}`,
+      actions: 'متابعة حسب الخطة.'
+    })),
+    incidents: incidents.map((i, index) => ({
+      id: i.id || `incident-${index+1}`,
+      date: i.date || now,
+      facilityId: stateFacilities.find(f => f.name === i.facility)?.id || stateFacilities[0]?.id,
+      department: 'ضبط العدوى',
+      type: i.type,
+      severity: i.status === 'نشطة' ? 'عال' : 'متوسط',
+      status: i.status,
+      ownerId: 'u-admin',
+      description: i.type,
+      action: 'تم تسجيل الحالة للمتابعة.'
+    })),
+    checklistTemplates: [],
+    inventory: [],
+    trainings: [],
+    submissions: []
+  };
+}
+
+function restoreUiState(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(appStateKey) || 'null');
+    if(!saved) return;
+    replaceArray(facilities, saved.facilities);
+    replaceArray(staff, saved.staff);
+    tasks = saved.tasks || tasks;
+    replaceArray(dailyReports, saved.dailyReports);
+    replaceArray(incidents, saved.incidents);
+    replaceArray(auditLogs, saved.auditLogs || auditLogs);
+  }catch{}
+}
+
+function persistUiState(){
+  const saved = { facilities, staff, tasks, dailyReports, incidents, auditLogs };
+  localStorage.setItem(appStateKey, JSON.stringify(saved));
+  if(remoteMode){
+    apiRequest('/api/state', { method:'POST', body: JSON.stringify({ state: snapshotState() }) }).catch(()=>{});
+  }
+}
+
+function addAudit(action){
+  const user = document.getElementById('userName')?.textContent || 'النظام';
+  auditLogs.unshift({ user, action, time: new Date().toLocaleString('ar-SY'), icon:'check-circle' });
+  if(auditLogs.length > 40) auditLogs.pop();
+}
+
+restoreUiState();
+
+// Login
+async function handleLogin(e){
+  e.preventDefault();
+  const u=document.getElementById('username').value;
+  const p=document.getElementById('password').value;
+  const r=document.getElementById('role').value;
+  if(!u||!r){showToast('يرجى ملء جميع الحقول','error');return}
+  try{
+    const result = await apiRequest('/api/login', { method:'POST', body: JSON.stringify({ username:u, password:p }) });
+    sessionStorage.setItem(apiTokenKey, result.token);
+    remoteMode = true;
+    mapServerState(result.state);
+    addAudit('تسجيل دخول عبر السيرفر المحمي');
+  }catch{
+    remoteMode = false;
+    sessionStorage.removeItem(apiTokenKey);
+  }
+  const roles={admin:'مدير النظام',supervisor:'مشرف ضبط العدوى',officer:'مسؤول ضبط العدوى',viewer:'مطلع'};
+  document.getElementById('userName').textContent=u;
+  document.getElementById('userRole').textContent=roles[r];
+  document.getElementById('userAvatar').textContent=u.charAt(0).toUpperCase();
+  document.getElementById('loginPage').style.display='none';
+  document.getElementById('app').classList.add('active');
+  showToast('مرحباً بك في النظام','success');
+  setTimeout(()=>{initCharts();renderAll()},100);
+}
+
+function togglePassword(){
+  const i=document.getElementById('password');
+  const ic=document.querySelector('.toggle-pass i');
+  if(i.type==='password'){i.type='text';ic.classList.replace('fa-eye','fa-eye-slash')}
+  else{i.type='password';ic.classList.replace('fa-eye-slash','fa-eye')}
+}
+
+function logout(){
+  if(confirm('هل تريد تسجيل الخروج؟')){
+    apiRequest('/api/logout', { method:'POST' }).catch(()=>{});
+    sessionStorage.removeItem(apiTokenKey);
+    remoteMode = false;
+    document.getElementById('app').classList.remove('active');
+    document.getElementById('loginPage').style.display='flex';
+  }
+}
+
+// Navigation
+function showPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.menu-item').forEach(m=>m.classList.remove('active'));
+  if(el)el.classList.add('active');
+  if(window.innerWidth<=1024)document.getElementById('sidebar').classList.remove('open');
+  if(id==='weekly')setTimeout(initWeeklyChart,100);
+  if(id==='monthly')setTimeout(initMonthlyCharts,100);
+}
+
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open')}
+
+// Theme
+function toggleTheme(){
+  const c=document.documentElement.getAttribute('data-theme');
+  const n=c==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',n);
+  localStorage.setItem('theme',n);
+  showToast('تم تبديل الوضع إلى '+(n==='dark'?'الليلي':'النهاري'));
+}
+if(localStorage.getItem('theme'))document.documentElement.setAttribute('data-theme',localStorage.getItem('theme'));
+
+// Render
+function renderAll(){
+  updateStats();
+  renderFacilities();renderStaff();renderTasks();renderUrgent();renderDaily();renderIncidents();renderAudit();
+}
+
+function updateStats(){
+  const values = document.querySelectorAll('#dashboard .stat-value');
+  if(values[0]) values[0].textContent = facilities.length;
+  if(values[1]) values[1].textContent = staff.length;
+  if(values[2]) values[2].textContent = tasks.filter(t=>!t.done).length;
+  if(values[3]) values[3].textContent = incidents.length;
+  const liveValues = document.querySelectorAll('#live .stat-value');
+  if(liveValues[0]) liveValues[0].textContent = facilities.length + '/' + facilities.length;
+  if(liveValues[1]){
+    const avg = facilities.length ? Math.round(facilities.reduce((s,f)=>s+Number(f.compliance||0),0)/facilities.length) : 0;
+    liveValues[1].textContent = avg + '%';
+  }
+  if(liveValues[2]) liveValues[2].textContent = tasks.filter(t=>!t.done && t.priority==='high').length;
+  if(liveValues[3]) liveValues[3].textContent = incidents.filter(i=>i.status==='نشطة').length;
+}
+
+function renderFacilities(){
+  document.getElementById('facilitiesGrid').innerHTML=facilities.map(f=>`
+    <div class="facility-card">
+      <div class="facility-header"><div class="facility-icon"><i class="fas fa-${f.icon}"></i></div><span class="status success">${f.status}</span></div>
+      <h4>${f.name}</h4>
+      <div class="location"><i class="fas fa-map-marker-alt"></i> ${f.location} - ${f.type}</div>
+      <div class="facility-stats">
+        <div class="facility-stat"><div class="num">${f.staff}</div><div class="lbl">موظف</div></div>
+        <div class="facility-stat"><div class="num">${f.beds}</div><div class="lbl">سرير</div></div>
+        <div class="facility-stat"><div class="num">${f.compliance}%</div><div class="lbl">التزام</div></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderStaff(){
+  document.getElementById('staffTable').innerHTML=staff.map(s=>`
+    <tr>
+      <td><div style="display:flex;align-items:center;gap:10px"><div class="user-avatar" style="width:35px;height:35px;font-size:13px">${s.name.charAt(2)}</div><div style="font-weight:600">${s.name}</div></div></td>
+      <td>${s.role}</td><td>${s.facility}</td><td>${s.phone}</td>
+      <td><span class="status ${s.status==='نشط'?'success':'warning'}">${s.status}</span></td>
+      <td><button class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i></button> <button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button></td>
+    </tr>`).join('');
+}
+
+function renderTasks(filter='all'){
+  let f=tasks;
+  if(filter==='pending')f=tasks.filter(t=>!t.done);
+  else if(filter==='done')f=tasks.filter(t=>t.done);
+  document.getElementById('tasksList').innerHTML=f.map((t,i)=>`
+    <div class="task-item ${t.priority}">
+      <div class="task-check ${t.done?'done':''}" onclick="toggleTask(${tasks.indexOf(t)})">${t.done?'<i class="fas fa-check" style="font-size:12px"></i>':''}</div>
+      <div class="task-content">
+        <div class="task-title" style="${t.done?'text-decoration:line-through;opacity:.6':''}">${t.title}</div>
+        <div class="task-meta">
+          <span><i class="fas fa-user"></i> ${t.assignee}</span>
+          <span><i class="fas fa-clock"></i> ${t.date}</span>
+          <span class="priority ${t.priority}">${t.priority==='high'?'عاجل':t.priority==='medium'?'متوسط':'عادي'}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function filterTasks(f,el){
+  document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderTasks(f);
+}
+
+function toggleTask(i){
+  tasks[i].done=!tasks[i].done;
+  addAudit(tasks[i].done ? 'إغلاق مهمة' : 'إعادة فتح مهمة');
+  persistUiState();
+  renderTasks();renderUrgent();
+  showToast(tasks[i].done?'تم إنجاز المهمة':'تم إعادة فتح المهمة');
+}
+
+function renderUrgent(){
+  const u=tasks.filter(t=>!t.done&&t.priority==='high').slice(0,3);
+  document.getElementById('urgentTasks').innerHTML=u.map(t=>`
+    <div class="task-item ${t.priority}">
+      <div class="task-check"></div>
+      <div class="task-content">
+        <div class="task-title">${t.title}</div>
+        <div class="task-meta"><span><i class="fas fa-clock"></i> ${t.date}</span><span class="priority high">عاجل</span></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderDaily(){
+  document.getElementById('dailyTable').innerHTML=dailyReports.map(r=>`
+    <tr>
+      <td><strong>${r.id}</strong></td><td>${r.facility}</td><td>${r.date}</td><td>${r.cases}</td>
+      <td><div style="display:flex;align-items:center;gap:10px"><div style="flex:1;background:var(--bg);height:8px;border-radius:10px;overflow:hidden"><div style="width:${r.compliance}%;height:100%;background:${r.compliance>=90?'var(--secondary)':r.compliance>=80?'var(--warning)':'var(--danger)'}"></div></div><strong>${r.compliance}%</strong></div></td>
+      <td><span class="status ${r.status==='معتمد'?'success':'warning'}">${r.status}</span></td>
+      <td><button class="btn btn-secondary btn-sm" onclick="window.print()"><i class="fas fa-print"></i></button> <button class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i></button></td>
+    </tr>`).join('');
+}
+
+function renderIncidents(){
+  document.getElementById('incidentsTable').innerHTML=incidents.map(i=>`
+    <tr>
+      <td><strong>${i.id}</strong></td><td>${i.type}</td><td>${i.facility}</td><td>${i.date}</td>
+      <td><span class="status ${i.status==='نشطة'?'danger':i.status==='قيد التحقيق'?'warning':'success'}">${i.status}</span></td>
+      <td><button class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i></button> <button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button></td>
+    </tr>`).join('');
+}
+
+function renderAudit(){
+  document.getElementById('auditLog').innerHTML=auditLogs.map(l=>`
+    <div class="log-item">
+      <div class="log-icon"><i class="fas fa-${l.icon}"></i></div>
+      <div class="log-content"><div class="log-title">${l.user} - ${l.action}</div><div class="log-meta">${l.time}</div></div>
+    </div>`).join('');
+}
+
+// Charts
+let mainChart,pieChart,weeklyChartInst,monthlyChartInst,monthlyPieChartInst;
+
+function initCharts(){
+  const ctx=document.getElementById('mainChart').getContext('2d');
+  const g1=ctx.createLinearGradient(0,0,0,300);g1.addColorStop(0,'rgba(14,165,233,.4)');g1.addColorStop(1,'rgba(14,165,233,0)');
+  const g2=ctx.createLinearGradient(0,0,0,300);g2.addColorStop(0,'rgba(16,185,129,.4)');g2.addColorStop(1,'rgba(16,185,129,0)');
+  mainChart=new Chart(ctx,{type:'line',data:{labels:['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'],datasets:[{label:'نسبة الالتزام',data:[92,94,91,95,96,94,96],borderColor:'#0ea5e9',backgroundColor:g1,tension:.4,fill:true,borderWidth:3,pointBackgroundColor:'#0ea5e9',pointRadius:5},{label:'الحالات',data:[5,3,4,2,3,1,2],borderColor:'#10b981',backgroundColor:g2,tension:.4,fill:true,borderWidth:3,pointBackgroundColor:'#10b981',pointRadius:5}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'top',labels:{font:{family:'Cairo',size:13}}}},scales:{y:{beginAtZero:true,max:100}}}});
+  
+  pieChart=new Chart(document.getElementById('pieChart'),{type:'doughnut',data:{labels:['مستشفيات','مستوصفات','مراكز صحية'],datasets:[{data:[8,6,10],backgroundColor:['#0ea5e9','#10b981','#f59e0b'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{family:'Cairo',size:12},padding:15}}},cutout:'65%'}});
+}
+
+function initWeeklyChart(){
+  if(weeklyChartInst)weeklyChartInst.destroy();
+  weeklyChartInst=new Chart(document.getElementById('weeklyChart'),{type:'bar',data:{labels:['الأسبوع 1','الأسبوع 2','الأسبوع 3','الأسبوع 4'],datasets:[{label:'التقارير',data:[42,38,45,43],backgroundColor:'#0ea5e9',borderRadius:10},{label:'المهام',data:[78,82,75,77],backgroundColor:'#10b981',borderRadius:10}]},options:{responsive:true,plugins:{legend:{labels:{font:{family:'Cairo'}}}},scales:{y:{beginAtZero:true}}}});
+}
+
+function initMonthlyCharts(){
+  if(monthlyChartInst)monthlyChartInst.destroy();
+  if(monthlyPieChartInst)monthlyPieChartInst.destroy();
+  const ctx=document.getElementById('monthlyChart').getContext('2d');
+  const g=ctx.createLinearGradient(0,0,0,300);g.addColorStop(0,'rgba(99,102,241,.4)');g.addColorStop(1,'rgba(99,102,241,0)');
+  monthlyChartInst=new Chart(ctx,{type:'line',data:{labels:['يناير','فبراير','مارس','أبريل','مايو','يونيو'],datasets:[{label:'معدل الالتزام %',data:[88,90,92,94,95,96],borderColor:'#6366f1',backgroundColor:g,tension:.4,fill:true,borderWidth:3,pointRadius:6,pointBackgroundColor:'#6366f1'}]},options:{responsive:true,plugins:{legend:{labels:{font:{family:'Cairo'}}}},scales:{y:{beginAtZero:true,max:100}}}});
+  monthlyPieChartInst=new Chart(document.getElementById('monthlyPieChart'),{type:'polarArea',data:{labels:['صنعاء','عدن','تعز','الحديدة','إب'],datasets:[{data:[25,20,18,15,22],backgroundColor:['#0ea5e9','#10b981','#f59e0b','#ef4444','#6366f1']}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{family:'Cairo'}}}}}});
+}
+
+// Live updates
+setInterval(()=>{
+  const tl=document.getElementById('liveTimeline');
+  if(!tl||!document.getElementById('live').classList.contains('active'))return;
+  const acts=[
+    {type:'success',msg:'مستشفى الأمل: تم تسجيل فحص جديد'},
+    {type:'',msg:'مركز النور: رفع تقرير النظافة'},
+    {type:'warning',msg:'مستشفى الرحمة: تنبيه مخزون'},
+    {type:'success',msg:'مستشفى السلام: اكتمال تدريب'},
+    {type:'danger',msg:'مركز الأمل: حالة مشتبه بها'}
+  ];
+  const r=acts[Math.floor(Math.random()*acts.length)];
+  const now=new Date();
+  const t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')+':'+now.getSeconds().toString().padStart(2,'0');
+  const n=document.createElement('div');
+  n.className='timeline-item '+r.type;
+  n.innerHTML=`<div class="timeline-time">الآن - ${t}</div><div class="timeline-content">${r.msg}</div>`;
+  n.style.opacity='0';
+  tl.insertBefore(n,tl.firstChild);
+  setTimeout(()=>n.style.opacity='1',50);
+  if(tl.children.length>10)tl.removeChild(tl.lastChild);
+},10000);
+
+// Modals
+function openModal(id){document.getElementById(id).classList.add('active')}
+function closeModal(id){document.getElementById(id).classList.remove('active')}
+function save(modal,msg){
+  const modalEl = document.getElementById(modal);
+  const fields = [...modalEl.querySelectorAll('input,select,textarea')];
+  const value = index => fields[index]?.value?.trim() || '';
+  const today = new Date().toISOString().slice(0,10);
+
+  if(modal === 'newFacilityModal'){
+    facilities.push({
+      id:'facility-'+Date.now(),
+      name:value(0) || 'مرفق جديد',
+      type:value(1) || 'مرفق صحي',
+      location:value(2) || 'غير محدد',
+      staff:0,
+      beds:0,
+      compliance:90,
+      status:'نشط',
+      icon:(value(1) || '').includes('مستشفى') ? 'hospital' : 'clinic-medical'
+    });
+    addAudit('إضافة مرفق صحي');
+  }
+
+  if(modal === 'newStaffModal'){
+    staff.push({
+      id:'staff-'+Date.now(),
+      name:value(0) || 'موظف جديد',
+      username:(value(0) || 'user').replace(/\s+/g,'.').toLowerCase(),
+      password:'123456',
+      role:value(1) || 'مسؤول ضبط عدوى',
+      facility:value(2) || facilities[0]?.name || '-',
+      phone:value(3) || '-',
+      status:'نشط'
+    });
+    addAudit('إضافة موظف جديد');
+  }
+
+  if(modal === 'newTaskModal'){
+    tasks.unshift({
+      id:'task-'+Date.now(),
+      title:value(0) || 'مهمة جديدة',
+      assignee:value(1) || 'غير محدد',
+      priority:value(2) || 'medium',
+      date:value(4) || value(3) || today,
+      done:false
+    });
+    addAudit('إنشاء مهمة جديدة');
+  }
+
+  if(modal === 'newReportModal'){
+    dailyReports.unshift({
+      id:'RPT-'+Date.now(),
+      facility:value(0) || facilities[0]?.name || '-',
+      date:value(1) || today,
+      cases:Number(value(2) || 0),
+      compliance:Number(value(3) || 90),
+      status:'قيد المراجعة'
+    });
+    addAudit('حفظ تقرير يومي');
+  }
+
+  if(modal === 'newIncidentModal'){
+    incidents.unshift({
+      id:'INC-'+Date.now(),
+      type:value(0) || 'حالة عدوى',
+      facility:value(1) || facilities[0]?.name || '-',
+      date:value(2) || today,
+      status:value(3) === 'عالية' ? 'نشطة' : 'قيد التحقيق'
+    });
+    addAudit('تسجيل حالة عدوى');
+  }
+
+  fields.forEach(field => {
+    if(field.tagName !== 'SELECT') field.value = '';
+  });
+  persistUiState();
+  renderAll();
+  closeModal(modal);
+  showToast(msg,'success');
+}
+
+// Toast
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  const ic=t.querySelector('i');
+  document.getElementById('toastMsg').textContent=msg;
+  ic.className=type==='error'?'fas fa-times-circle':'fas fa-check-circle';
+  ic.style.color=type==='error'?'var(--danger)':'var(--secondary)';
+  t.className='toast show'+(type==='error'?' error':'');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// Export
+function exportPDF(section){
+  showToast('جاري تصدير PDF...');
+  setTimeout(()=>{
+    const el=document.getElementById(section);
+    html2pdf().from(el).set({margin:10,filename:section+'-report.pdf',image:{type:'jpeg',quality:.98},html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).save();
+  },500);
+}
+
+function exportExcel(){
+  showToast('جاري تصدير Excel...');
+  setTimeout(()=>{
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(facilities),'المرافق');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(staff),'الموظفون');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(tasks),'المهام');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(dailyReports),'التقارير اليومية');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(incidents),'حالات العدوى');
+    XLSX.writeFile(wb,'report-'+Date.now()+'.xlsx');
+  },500);
+}
+
+// Close modal on outside click
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('active')}));
+
+document.querySelector('.search-box input')?.addEventListener('input', event => {
+  const term = event.target.value.trim().toLowerCase();
+  document.querySelectorAll('tbody tr,.facility-card,.task-item,.log-item').forEach(item => {
+    item.style.display = !term || item.textContent.toLowerCase().includes(term) ? '' : 'none';
+  });
+});
+
+// Print date
+document.getElementById('printDate').textContent='تاريخ الطباعة: '+new Date().toLocaleDateString('ar-EG');
+</script>
+
+</body>
 </html>
