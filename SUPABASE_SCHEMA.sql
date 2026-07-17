@@ -8,6 +8,15 @@ create table if not exists public.profiles (
   created_at timestamptz default now()
 );
 
+alter table public.profiles add column if not exists email text;
+alter table public.profiles add column if not exists facilities jsonb default '[]'::jsonb;
+alter table public.profiles add column if not exists responsibilities jsonb default '[]'::jsonb;
+alter table public.profiles add column if not exists report_types jsonb default '[]'::jsonb;
+alter table public.profiles add column if not exists report_frequency text default 'يومي';
+alter table public.profiles add column if not exists manager text default 'مدير النظام';
+alter table public.profiles add column if not exists approval_scope text default 'لا يعتمد';
+alter table public.profiles add column if not exists checklist_scope jsonb default '[]'::jsonb;
+
 create table if not exists public.app_state (
   id text primary key default 'main',
   state jsonb not null,
@@ -29,6 +38,18 @@ create policy "profiles_insert_self"
 on public.profiles for insert
 to authenticated
 with check (auth.uid() = id);
+
+drop policy if exists "profiles_insert_admin" on public.profiles;
+create policy "profiles_insert_admin"
+on public.profiles for insert
+to authenticated
+with check (
+  exists (
+    select 1 from public.profiles p
+    where p.id = auth.uid()
+    and p.role in ('مدير النظام','مدير منشأة','مسؤول ضبط عدوى','ظ…ط¯ظٹط± ط§ظ„ظ†ط¸ط§ظ…','ظ…ط¯ظٹط± ظ…ظ†ط´ط£ط©','ظ…ط³ط¤ظˆظ„ ط¶ط¨ط· ط§ظ„ط¹ط¯ظˆظ‰')
+  )
+);
 
 drop policy if exists "profiles_update_admin_or_self" on public.profiles;
 create policy "profiles_update_admin_or_self"

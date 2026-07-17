@@ -312,6 +312,8 @@ tbody tr:hover{background:var(--bg)}
 .offline-badge{position:fixed;left:18px;bottom:18px;z-index:120;background:#0f172a;color:white;border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:10px 14px;box-shadow:var(--shadow);display:none}.offline-badge.show{display:block}
 .attachment-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.attachment-preview img{width:58px;height:58px;object-fit:cover;border-radius:10px;border:1px solid var(--border)}
 .system-dialog{position:fixed;inset:0;background:rgba(2,6,23,.64);z-index:300;display:none;align-items:center;justify-content:center;padding:18px}.system-dialog.show{display:flex}.system-dialog .box{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);max-width:540px;width:100%;padding:20px}.system-dialog textarea,.system-dialog input{width:100%;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);font-family:inherit;margin-top:12px}
+.report-center{margin-bottom:18px}.report-toolbar{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px}.report-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}.report-doc-card{border:1px solid var(--border);background:var(--card);border-radius:16px;padding:16px;box-shadow:var(--shadow)}.report-doc-card h4{font-size:17px;margin-bottom:8px}.report-doc-meta{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.report-doc-meta span{font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:5px 9px;color:var(--text2)}.report-section-list{margin:10px 0;color:var(--text2);line-height:1.8;font-size:13px}.responsibility-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.official-report{font-family:Arial,Tahoma,sans-serif;color:#142033;background:white}.official-report .sheet{max-width:210mm;margin:auto;padding:18mm}.official-report .letterhead{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #2bbdb8;padding-bottom:14px;margin-bottom:18px}.official-report .brand{display:flex;align-items:center;gap:12px}.official-report img.logo{width:64px;height:64px;border-radius:14px}.official-report table{width:100%;border-collapse:collapse;margin:14px 0}.official-report th,.official-report td{border:1px solid #d9e2ec;padding:9px;text-align:right;vertical-align:top}.official-report th{background:#eef9f8;color:#0f766e}.official-report .signatures{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:30px}.official-report .sign{border:1px dashed #94a3b8;min-height:76px;padding:12px}
 @media(max-width:700px){.topbar{gap:8px}.ipc-module-grid{grid-template-columns:1fr}.moment-grid{grid-template-columns:1fr}.modal-content{width:96vw;max-height:92vh}.assessment-body{padding:12px}.btn,.export-btn{min-height:42px}.sidebar{width:86vw}.main{padding:12px}.content{padding:12px}.page-header{align-items:stretch}.export-group{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px}}
 @media print{.sidebar,.topbar,.export-group,.btn,.icon-btn,.install-strip,.offline-badge,.system-dialog{display:none!important}.main{margin:0!important}.content{padding:0!important}.card,.ipc-tool-card{box-shadow:none!important;border-color:#d8dee8!important}.page:not(.active){display:none!important}body{background:white!important;color:#111827!important}}
 </style>
@@ -1031,6 +1033,11 @@ function mapServerState(state){
     reportTypes: u.reportTypes || reportCatalog.map(r=>r.title),
     reportFrequency: u.reportFrequency || 'يومي',
     manager: u.manager || 'مدير النظام',
+    responsibilities: u.responsibilities || ['تعبئة قوائم التحقق'],
+    approvalScope: u.approvalScope || 'لا يعتمد',
+    checklistScope: u.checklistScope || [],
+    authStatus: u.authStatus || '',
+    authUserId: u.authUserId || '',
     phone: u.phone || '-',
     status: u.status || 'نشط'
   })));
@@ -1131,6 +1138,11 @@ function snapshotState(){
       reportTypes: s.reportTypes || reportCatalog.map(r=>r.title),
       reportFrequency: s.reportFrequency || 'يومي',
       manager: s.manager || 'مدير النظام',
+      responsibilities: s.responsibilities || ['تعبئة قوائم التحقق'],
+      approvalScope: s.approvalScope || 'لا يعتمد',
+      checklistScope: s.checklistScope || [],
+      authStatus: s.authStatus || '',
+      authUserId: s.authUserId || '',
       department: 'ضبط العدوى',
       status: s.status || 'نشط'
     })),
@@ -1516,6 +1528,7 @@ function renderUsers(){
   body.innerHTML = staff.map((s,index)=>{
     const reports = Array.isArray(s.reportTypes) && s.reportTypes.length ? s.reportTypes : ['التقرير اليومي لضبط العدوى'];
     const facilitiesList = userFacilities(s);
+    const responsibilities = Array.isArray(s.responsibilities) && s.responsibilities.length ? s.responsibilities : ['تعبئة قوائم التحقق'];
     return `
       <tr>
         <td>
@@ -1526,10 +1539,10 @@ function renderUsers(){
         </td>
         <td><span class="status info">${s.role || '-'}</span></td>
         <td>${facilitiesList.join('، ')}</td>
-        <td>${reports.slice(0,3).join('، ')}${reports.length>3?'...':''}</td>
+        <td>${reports.slice(0,2).join('، ')}${reports.length>2?'...':''}<br><small style="color:var(--text2)">${responsibilities.slice(0,3).join('، ')}</small></td>
         <td>${s.reportFrequency || 'يومي'}</td>
         <td>${s.manager || 'مدير النظام'}</td>
-        <td><span class="status ${(s.status || '').includes('نشط') || s.status==='ظ†ط´ط·'?'success':'warning'}">${s.status || 'نشط'}</span></td>
+        <td><span class="status ${(s.status || '').includes('نشط') || s.status==='ظ†ط´ط·'?'success':'warning'}">${s.status || 'نشط'}</span><br><small style="color:var(--text2)">${s.authStatus || 'صلاحيات داخل النظام'}</small></td>
         <td>
           <button class="btn btn-secondary btn-sm" onclick="editUser(${index})"><i class="fas fa-edit"></i></button>
           <button class="btn btn-primary btn-sm" onclick="assignUserReports(${index})"><i class="fas fa-clipboard-list"></i></button>
@@ -2008,6 +2021,11 @@ function prepareStaffModal(){
           <div class="form-group"><label>تواتر التقارير</label><select id="staffReportFrequency"><option>يومي</option><option>أسبوعي</option><option>شهري</option><option>عند الحاجة</option></select></div>
         </div>
         <div class="form-group"><label>المسؤول المباشر</label><select id="staffManager"></select></div>
+        <div class="responsibility-grid">
+          <div class="form-group"><label>مسؤوليات المستخدم</label><select id="staffResponsibilities" multiple size="6"><option>تعبئة قوائم التحقق</option><option>رفع تقارير يومية</option><option>ترصد HAI</option><option>تدقيق نظافة اليدين</option><option>إدارة حوادث التعرض المهني</option><option>متابعة الإجراءات التصحيحية</option><option>اعتماد تقارير المنشأة</option></select></div>
+          <div class="form-group"><label>صلاحيات الاعتماد</label><select id="staffApprovalScope"><option>لا يعتمد</option><option>يعتمد تقاريره فقط</option><option>يعتمد تقارير منشأة محددة</option><option>يعتمد كل المنشآت المكلف بها</option></select></div>
+          <div class="form-group"><label>قوائم تحقق مكلف بها</label><select id="staffChecklistScope" multiple size="6"></select></div>
+        </div>
       </div>`);
   }
   const facilitiesBox = document.getElementById('staffFacilities');
@@ -2018,6 +2036,8 @@ function prepareStaffModal(){
   if(reports) reports.innerHTML = reportCatalog.map(r=>`<option value="${r.title}">${r.title} - ${r.frequency}</option>`).join('');
   const manager = document.getElementById('staffManager');
   if(manager) manager.innerHTML = `<option value="مدير النظام">مدير النظام</option>` + staff.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
+  const checklistScope = document.getElementById('staffChecklistScope');
+  if(checklistScope) checklistScope.innerHTML = checklistTemplates.map(c=>`<option value="${c.id}">${c.title} - ${c.department}</option>`).join('');
 }
 
 function openModal(id){
@@ -2214,6 +2234,43 @@ function queueOrSync(type, payload){
   return true;
 }
 
+async function createSupabaseAuthUserForStaff(user){
+  const cfg = window.HIHFAD_SUPABASE || {};
+  if(!cfg.url || !cfg.anonKey || !window.supabase) return { ok:false, message:'Supabase غير مفعّل' };
+  const email = user.email || (user.username?.includes('@') ? user.username : `${user.username || 'user'+Date.now()}@hihfad.local`);
+  if(!user.password || user.password.length < 6) return { ok:false, message:'كلمة المرور يجب أن تكون 6 أحرف على الأقل' };
+  const tempClient = window.supabase.createClient(cfg.url, cfg.anonKey, { auth:{ persistSession:false, autoRefreshToken:false, detectSessionInUrl:false } });
+  const { data, error } = await tempClient.auth.signUp({
+    email,
+    password:user.password,
+    options:{ data:{ name:user.name, role:user.role, facility:user.facility, department:user.specialty } }
+  });
+  if(error) return { ok:false, message:error.message };
+  user.authUserId = data.user?.id || user.authUserId;
+  user.email = email;
+  user.authStatus = data.user?.identities?.length === 0 ? 'الحساب موجود سابقاً' : 'حساب دخول فعلي';
+  if(user.authUserId && getSupabaseClient()){
+    await getSupabaseClient().from('profiles').upsert({
+      id:user.authUserId,
+      email:user.email,
+      name:user.name,
+      role:user.role,
+      facility_id:user.facility || 'all',
+      department:user.specialty || 'ضبط العدوى',
+      status:user.status || 'نشط',
+      facilities:user.facilities || [],
+      responsibilities:user.responsibilities || [],
+      report_types:user.reportTypes || [],
+      report_frequency:user.reportFrequency || 'يومي',
+      manager:user.manager || 'مدير النظام',
+      approval_scope:user.approvalScope || 'لا يعتمد',
+      checklist_scope:user.checklistScope || []
+    }).catch(()=>{});
+  }
+  user.password = '';
+  return { ok:true, message:user.authStatus };
+}
+
 function syncOfflineQueue(){
   if(!navigator.onLine || !offlineQueue.length) return;
   const count = offlineQueue.length;
@@ -2340,7 +2397,28 @@ function refreshFacilitySelectsInModal(modalId){
   });
 }
 
-function prepareReportModal(){ refreshFacilitySelectsInModal('newReportModal'); }
+function prepareReportModal(){
+  refreshFacilitySelectsInModal('newReportModal');
+  const body = document.querySelector('#newReportModal .modal-body');
+  if(!body || document.getElementById('officialReportFields')) return;
+  body.insertAdjacentHTML('beforeend', `<div id="officialReportFields">
+    <div class="form-row">
+      <div class="form-group"><label>نوع التقرير النظامي</label><select id="reportType">${reportCatalog.map(r=>`<option value="${r.title}">${r.title} - ${r.frequency}</option>`).join('')}<option>تقرير HAI سريري</option><option>تقرير تفشي/إنذار وبائي</option><option>تقرير إجراءات تصحيحية</option></select></div>
+      <div class="form-group"><label>القسم / الوحدة</label><select id="reportDepartment">${ipcSpecialties.map(s=>`<option value="${s}">${s}</option>`).join('')}</select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>الفترة / الوردية</label><select id="reportShift"><option>صباحية</option><option>مسائية</option><option>ليلية</option><option>كامل اليوم</option><option>أسبوعي</option><option>شهري</option></select></div>
+      <div class="form-group"><label>مستوى الخطورة</label><select id="reportRisk"><option>منخفض</option><option>متوسط</option><option>عال</option><option>حرج</option></select></div>
+    </div>
+    <div class="form-group"><label>ملخص تنفيذي</label><textarea id="reportSummary" style="width:100%;padding:12px;border:2px solid var(--border);border-radius:12px;min-height:90px;font-family:inherit;background:var(--card);color:var(--text)" placeholder="ما الذي تم تدقيقه؟ ما أهم النتائج؟"></textarea></div>
+    <div class="form-group"><label>النتائج التفصيلية</label><textarea id="reportFindings" style="width:100%;padding:12px;border:2px solid var(--border);border-radius:12px;min-height:110px;font-family:inherit;background:var(--card);color:var(--text)" placeholder="اكتب كل نتيجة بسطر مستقل"></textarea></div>
+    <div class="form-group"><label>الإجراءات التصحيحية والمسؤول عنها</label><textarea id="reportActions" style="width:100%;padding:12px;border:2px solid var(--border);border-radius:12px;min-height:110px;font-family:inherit;background:var(--card);color:var(--text)" placeholder="الإجراء - المسؤول - الموعد"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>الموعد التالي للمتابعة</label><input id="reportNextDue" type="date"></div>
+      <div class="form-group"><label>مرفقات التقرير</label><input id="reportAttachments" type="file" accept="image/*,.pdf" multiple></div>
+    </div>
+  </div>`);
+}
 function prepareTaskModal(){
   const modal = document.getElementById('newTaskModal');
   if(!modal) return;
@@ -2457,7 +2535,9 @@ save = function(modal,msg){
     if(user){
       const selectedFacilities = [...(document.getElementById('staffFacilities')?.selectedOptions || [])].map(o=>o.value);
       const selectedReports = [...(document.getElementById('staffReportTypes')?.selectedOptions || [])].map(o=>o.value);
-      staff[activeStaffEditIndex] = {...user, name:fields[0]?.value?.trim() || user.name, role:fields[1]?.value || user.role, facility:selectedFacilities[0] || fields[2]?.value || user.facility, facilities:selectedFacilities.length ? selectedFacilities : userFacilities(user), phone:fields[3]?.value?.trim() || user.phone, username:document.getElementById('staffEmail')?.value?.trim() || user.username, specialty:document.getElementById('staffSpecialty')?.value || user.specialty, reportTypes:selectedReports.length ? selectedReports : user.reportTypes, reportFrequency:document.getElementById('staffReportFrequency')?.value || user.reportFrequency, manager:document.getElementById('staffManager')?.value || user.manager};
+      const responsibilities = [...(document.getElementById('staffResponsibilities')?.selectedOptions || [])].map(o=>o.value);
+      const checklistScope = [...(document.getElementById('staffChecklistScope')?.selectedOptions || [])].map(o=>o.value);
+      staff[activeStaffEditIndex] = {...user, name:fields[0]?.value?.trim() || user.name, role:fields[1]?.value || user.role, facility:selectedFacilities[0] || fields[2]?.value || user.facility, facilities:selectedFacilities.length ? selectedFacilities : userFacilities(user), phone:fields[3]?.value?.trim() || user.phone, username:document.getElementById('staffEmail')?.value?.trim() || user.username, specialty:document.getElementById('staffSpecialty')?.value || user.specialty, reportTypes:selectedReports.length ? selectedReports : user.reportTypes, reportFrequency:document.getElementById('staffReportFrequency')?.value || user.reportFrequency, manager:document.getElementById('staffManager')?.value || user.manager, responsibilities:responsibilities.length ? responsibilities : user.responsibilities, approvalScope:document.getElementById('staffApprovalScope')?.value || user.approvalScope, checklistScope:checklistScope.length ? checklistScope : user.checklistScope};
       activeStaffEditIndex = null;
       persistUiState(); renderAll(); closeModal(modal); showToast('تم تعديل المستخدم والصلاحيات'); return;
     }
@@ -2474,6 +2554,22 @@ save = function(modal,msg){
     }
   }
   oldSave(modal,msg);
+  if(modal === 'newStaffModal'){
+    const created = staff[staff.length - 1];
+    if(created){
+      created.responsibilities = [...(document.getElementById('staffResponsibilities')?.selectedOptions || [])].map(o=>o.value);
+      created.approvalScope = document.getElementById('staffApprovalScope')?.value || 'لا يعتمد';
+      created.checklistScope = [...(document.getElementById('staffChecklistScope')?.selectedOptions || [])].map(o=>o.value);
+      created.authStatus = created.password ? 'جاري إنشاء حساب الدخول...' : 'بحاجة كلمة مرور لإنشاء حساب دخول';
+      persistUiState(); renderUsers();
+      createSupabaseAuthUserForStaff(created).then(result => {
+        created.authStatus = result.ok ? result.message : `لم ينشأ Auth: ${result.message}`;
+        persistUiState();
+        renderUsers();
+        showToast(result.ok ? 'تم إنشاء حساب دخول حقيقي للمستخدم' : created.authStatus, result.ok ? 'success' : 'error');
+      });
+    }
+  }
   if(modal === 'newIncidentModal'){
     const incident = incidents[0];
     if(incident){
@@ -2488,7 +2584,78 @@ save = function(modal,msg){
     }
   }
   if(modal === 'newReportModal') queueOrSync('daily_report', dailyReports[0]);
+  if(modal === 'newReportModal' && dailyReports[0]){
+    const report = dailyReports[0];
+    report.reportType = document.getElementById('reportType')?.value || report.type || 'تقرير ضبط عدوى';
+    report.department = document.getElementById('reportDepartment')?.value || report.department || 'ضبط العدوى';
+    report.shift = document.getElementById('reportShift')?.value || 'كامل اليوم';
+    report.riskLevel = document.getElementById('reportRisk')?.value || 'متوسط';
+    report.summary = document.getElementById('reportSummary')?.value || report.notes || '';
+    report.findings = (document.getElementById('reportFindings')?.value || '').split('\n').map(x=>x.trim()).filter(Boolean);
+    report.correctiveActions = (document.getElementById('reportActions')?.value || '').split('\n').map(x=>x.trim()).filter(Boolean);
+    report.nextDue = document.getElementById('reportNextDue')?.value || '';
+    report.preparedBy = currentUserProfile?.name || document.getElementById('userName')?.textContent || 'عامل ضبط العدوى';
+    report.approver = 'د. مصطفى الخطيب';
+    report.status = 'بانتظار الاعتماد';
+    persistUiState();
+    renderAll();
+  }
 };
+
+function renderReportCenter(){
+  const page = document.getElementById('daily');
+  if(!page) return;
+  let center = document.getElementById('reportCenter');
+  if(!center){
+    center = document.createElement('div');
+    center.id = 'reportCenter';
+    center.className = 'report-center';
+    const tableCard = page.querySelector('.card');
+    if(tableCard) tableCard.before(center); else page.appendChild(center);
+  }
+  const facilitiesOptions = `<option value="all">كل المنشآت</option>` + facilities.map(f=>`<option value="${f.name}">${f.name}</option>`).join('');
+  center.innerHTML = `
+    <div class="card">
+      <div class="card-header"><h3><i class="fas fa-file-medical"></i> مركز التقارير النظامية</h3><button class="btn btn-primary btn-sm" onclick="openModal('newReportModal')"><i class="fas fa-plus"></i> تقرير نظامي جديد</button></div>
+      <div class="report-toolbar">
+        <div class="form-group"><label>فلترة المنشأة</label><select id="reportFacilityFilter" onchange="renderReportCenter()">${facilitiesOptions}</select></div>
+        <div class="form-group"><label>فلترة الحالة</label><select id="reportStatusFilter" onchange="renderReportCenter()"><option value="all">كل الحالات</option><option>بانتظار الاعتماد</option><option>معتمد</option><option>بحاجة مراجعة</option></select></div>
+        <div class="form-group"><label>تصدير</label><button class="btn btn-secondary" onclick="exportReportsCSV()"><i class="fas fa-file-csv"></i> CSV/Excel</button></div>
+      </div>
+      <div class="report-list" id="officialReportsList"></div>
+    </div>`;
+  const facilityFilter = document.getElementById('reportFacilityFilter');
+  const statusFilter = document.getElementById('reportStatusFilter');
+  const selectedFacility = facilityFilter?.value || 'all';
+  const selectedStatus = statusFilter?.value || 'all';
+  const visible = dailyReports.filter(r => (selectedFacility === 'all' || r.facility === selectedFacility) && (selectedStatus === 'all' || r.status === selectedStatus));
+  document.getElementById('officialReportsList').innerHTML = visible.map(r=>`
+    <article class="report-doc-card">
+      <h4>${r.reportType || r.templateTitle || 'تقرير ضبط عدوى'}</h4>
+      <div class="report-doc-meta"><span>${r.id}</span><span>${r.facility}</span><span>${r.department || 'ضبط العدوى'}</span><span>${r.date}</span><span>${r.status || 'بانتظار الاعتماد'}</span></div>
+      <div class="report-section-list">
+        <strong>الملخص:</strong> ${r.summary || r.notes || 'تقرير تحقق/تدقيق يحتاج مراجعة واعتماد.'}<br>
+        <strong>النتيجة:</strong> ${r.compliance || 0}% | <strong>الخطورة:</strong> ${r.riskLevel || 'متوسط'} | <strong>المتابعة:</strong> ${r.nextDue || 'غير محدد'}
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-secondary btn-sm" onclick="printProfessionalReport('${r.id}')"><i class="fas fa-file-pdf"></i> وثيقة PDF</button>
+        <button class="btn btn-primary btn-sm" onclick="approveReport('${r.id}')"><i class="fas fa-check"></i> اعتماد</button>
+        <button class="btn btn-danger btn-sm" onclick="rejectReport('${r.id}')"><i class="fas fa-undo"></i> مراجعة</button>
+      </div>
+    </article>`).join('') || '<div class="empty-state">لا توجد تقارير مطابقة.</div>';
+}
+
+function exportReportsCSV(){
+  const rows = [['id','type','facility','department','date','status','score','risk','preparedBy','approver']];
+  dailyReports.forEach(r => rows.push([r.id,r.reportType || r.templateTitle || '',r.facility,r.department || '',r.date,r.status || '',r.compliance || 0,r.riskLevel || '',r.preparedBy || r.author || '',r.approver || '']));
+  const csv = rows.map(row => row.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ipc-official-reports.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
 
 editChecklist = function(id){
   const c = checklistTemplates.find(item=>item.id===id);
@@ -2675,8 +2842,31 @@ renderAll = function(){
   sanitizeLegacyData();
   oldRenderAll();
   ensureAdvancedIpcModules();
+  renderReportCenter();
   neutralizePagePrintButtons();
   checkOutbreakAlerts();
+};
+
+printProfessionalReport = function(id){
+  const report = findReportById(id);
+  if(!report) return;
+  const title = report.reportType || report.templateTitle || 'تقرير ضبط العدوى';
+  const findings = Array.isArray(report.findings) && report.findings.length ? report.findings : String(report.details || report.notes || '').split(/<br>|\n/).filter(Boolean);
+  const actions = Array.isArray(report.correctiveActions) && report.correctiveActions.length ? report.correctiveActions : ['المتابعة حسب خطة ضبط العدوى وتوثيق الإغلاق.'];
+  const html = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${title}</title><style>
+    body{margin:0;background:#eef2f7}.official-report{font-family:Arial,Tahoma,sans-serif;color:#142033;background:white}.sheet{width:210mm;min-height:297mm;margin:0 auto;padding:18mm;box-sizing:border-box;background:white}.letterhead{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #2bbdb8;padding-bottom:14px;margin-bottom:18px}.brand{display:flex;align-items:center;gap:12px}.logo{width:64px;height:64px;border-radius:14px}h1{font-size:24px;margin:14px 0}h2{font-size:17px;border-right:5px solid #2bbdb8;padding-right:10px;margin-top:20px}table{width:100%;border-collapse:collapse;margin:12px 0}th,td{border:1px solid #d9e2ec;padding:9px;text-align:right;vertical-align:top}th{background:#eef9f8;color:#0f766e}.badge{border:1px solid #2bbdb8;color:#0f766e;border-radius:999px;padding:8px 12px;font-weight:700}.score{font-size:30px;font-weight:800}.signatures{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:30px}.sign{border:1px dashed #94a3b8;min-height:76px;padding:12px}.muted{color:#64748b}@media print{body{background:white}.sheet{margin:0;width:auto;min-height:auto}}</style></head><body><main class="official-report"><section class="sheet">
+    <div class="letterhead"><div class="brand"><img class="logo" src="/ipc/hihfad-logo.jpg" alt="HIHFAD"><div><strong>HIHFAD</strong><div class="muted">يدا بيد للإغاثة والتنمية - نظام ضبط العدوى</div></div></div><div class="badge">${report.status || 'بانتظار الاعتماد'}</div></div>
+    <h1>${title}</h1>
+    <table><tr><th>رقم التقرير</th><td>${report.id}</td><th>المنشأة</th><td>${report.facility}</td></tr><tr><th>القسم</th><td>${report.department || 'ضبط العدوى'}</td><th>التاريخ / الفترة</th><td>${report.date || ''} - ${report.shift || 'كامل اليوم'}</td></tr><tr><th>منفذ التقرير</th><td>${report.preparedBy || report.author || ''}</td><th>نسبة الالتزام</th><td><span class="score">${report.compliance || 0}%</span></td></tr><tr><th>مستوى الخطورة</th><td>${report.riskLevel || 'متوسط'}</td><th>المتابعة التالية</th><td>${report.nextDue || 'غير محدد'}</td></tr></table>
+    <h2>الملخص التنفيذي</h2><p>${report.summary || report.notes || 'تم إنشاء التقرير من نموذج ضبط العدوى الإلكتروني.'}</p>
+    <h2>النتائج التفصيلية</h2><ol>${findings.map(x=>`<li>${x}</li>`).join('')}</ol>
+    <h2>الإجراءات التصحيحية المطلوبة</h2><ol>${actions.map(x=>`<li>${x}</li>`).join('')}</ol>
+    <h2>قرار الاعتماد</h2><p>${report.approvedBy ? `تم الاعتماد بواسطة ${report.approvedBy} بتاريخ ${report.approvedAt || ''}` : 'بانتظار اعتماد المدير / مسؤول ضبط العدوى.'}${report.reviewNote ? `<br><strong>ملاحظة المراجعة:</strong> ${report.reviewNote}` : ''}</p>
+    <div class="signatures"><div class="sign"><strong>منفذ التقرير</strong><br>${report.preparedBy || report.author || ''}</div><div class="sign"><strong>مسؤول المنشأة</strong><br>${report.manager || ''}</div><div class="sign"><strong>اعتماد المدير</strong><br>${report.approver || 'د. مصطفى الخطيب'}</div></div>
+  </section></main><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
 };
 
 restoreAuthSession();
