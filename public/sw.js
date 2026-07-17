@@ -1,9 +1,10 @@
-const CACHE_NAME = "ipc-control-v3";
+const CACHE_NAME = "ipc-control-v4";
 const APP_SHELL = [
   "/ipc/",
   "/ipc/manifest.webmanifest",
   "/ipc/icon-192.svg",
-  "/ipc/icon-512.svg"
+  "/ipc/icon-512.svg",
+  "/ipc/hihfad-logo.jpg"
 ];
 
 self.addEventListener("install", (event) => {

@@ -314,7 +314,12 @@ tbody tr:hover{background:var(--bg)}
 .system-dialog{position:fixed;inset:0;background:rgba(2,6,23,.64);z-index:300;display:none;align-items:center;justify-content:center;padding:18px}.system-dialog.show{display:flex}.system-dialog .box{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);max-width:540px;width:100%;padding:20px}.system-dialog textarea,.system-dialog input{width:100%;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);font-family:inherit;margin-top:12px}
 .report-center{margin-bottom:18px}.report-toolbar{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px}.report-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}.report-doc-card{border:1px solid var(--border);background:var(--card);border-radius:16px;padding:16px;box-shadow:var(--shadow)}.report-doc-card h4{font-size:17px;margin-bottom:8px}.report-doc-meta{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.report-doc-meta span{font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:5px 9px;color:var(--text2)}.report-section-list{margin:10px 0;color:var(--text2);line-height:1.8;font-size:13px}.responsibility-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
 .official-report{font-family:Arial,Tahoma,sans-serif;color:#142033;background:white}.official-report .sheet{max-width:210mm;margin:auto;padding:18mm}.official-report .letterhead{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #2bbdb8;padding-bottom:14px;margin-bottom:18px}.official-report .brand{display:flex;align-items:center;gap:12px}.official-report img.logo{width:64px;height:64px;border-radius:14px}.official-report table{width:100%;border-collapse:collapse;margin:14px 0}.official-report th,.official-report td{border:1px solid #d9e2ec;padding:9px;text-align:right;vertical-align:top}.official-report th{background:#eef9f8;color:#0f766e}.official-report .signatures{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:30px}.official-report .sign{border:1px dashed #94a3b8;min-height:76px;padding:12px}
+.notification-panel{position:fixed;top:76px;left:24px;width:360px;max-width:calc(100vw - 32px);background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);z-index:220;display:none;overflow:hidden}.notification-panel.show{display:block}.notification-panel header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}.notification-list{max-height:360px;overflow:auto}.notification-item{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px}.notification-item.unread{background:rgba(14,165,233,.08)}.notification-item .n-dot{width:10px;height:10px;border-radius:50%;background:var(--primary);margin-top:8px;flex:0 0 auto}
+.bottom-nav{display:none;position:fixed;right:0;left:0;bottom:0;background:var(--card);border-top:1px solid var(--border);box-shadow:0 -8px 30px rgba(15,23,42,.12);z-index:180;padding:6px 8px;grid-template-columns:repeat(5,1fr);gap:4px}.bottom-nav button{border:0;background:transparent;color:var(--text2);font-family:inherit;font-size:11px;min-height:54px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}.bottom-nav button.active{background:rgba(14,165,233,.12);color:var(--primary);font-weight:800}.bottom-nav i{font-size:17px}
+.advanced-search{position:absolute;top:48px;right:0;width:420px;max-width:calc(100vw - 24px);background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:12px;z-index:90;display:none}.advanced-search.show{display:block}.advanced-search .results{max-height:280px;overflow:auto}.search-result{padding:10px;border-bottom:1px solid var(--border);cursor:pointer;border-radius:10px}.search-result:hover{background:var(--bg)}.comment-thread{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);font-size:13px}.comment-thread .comment{background:var(--bg);border-radius:10px;padding:8px;margin-top:6px}
+.btn,.card,.facility-card,.report-doc-card,.checklist-card{transition:transform .18s ease,box-shadow .18s ease}.btn:hover,.card:hover,.facility-card:hover,.report-doc-card:hover,.checklist-card:hover{transform:translateY(-1px)}
 @media(max-width:700px){.topbar{gap:8px}.ipc-module-grid{grid-template-columns:1fr}.moment-grid{grid-template-columns:1fr}.modal-content{width:96vw;max-height:92vh}.assessment-body{padding:12px}.btn,.export-btn{min-height:42px}.sidebar{width:86vw}.main{padding:12px}.content{padding:12px}.page-header{align-items:stretch}.export-group{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px}}
+@media(max-width:800px){.bottom-nav{display:grid}.mobile-mode .content,.content{padding-bottom:82px}.notification-panel{top:64px;left:12px}.search-box input{width:210px}.search-box input:focus{width:230px}}
 @media print{.sidebar,.topbar,.export-group,.btn,.icon-btn,.install-strip,.offline-badge,.system-dialog{display:none!important}.main{margin:0!important}.content{padding:0!important}.card,.ipc-tool-card{box-shadow:none!important;border-color:#d8dee8!important}.page:not(.active){display:none!important}body{background:white!important;color:#111827!important}}
 </style>
 </head>
@@ -400,7 +405,7 @@ tbody tr:hover{background:var(--bg)}
         <div class="live-indicator"><span class="live-dot"></span> مباشر</div>
         <button class="icon-btn" id="installBtn" onclick="installApp()" title="تثبيت التطبيق"><i class="fas fa-download"></i></button>
         <button class="icon-btn" onclick="toggleMobileMode()" title="وضع الجوال"><i class="fas fa-mobile-screen-button"></i></button>
-        <button class="icon-btn" onclick="showToast('لا توجد إشعارات جديدة')"><i class="fas fa-bell"></i><span class="dot"></span></button>
+        <button class="icon-btn" onclick="toggleNotifications()"><i class="fas fa-bell"></i><span class="dot"></span></button>
         <div class="theme-toggle" onclick="toggleTheme()" title="تبديل الوضع"></div>
         <div class="user-profile">
           <div class="user-info"><h4 id="userName">د. مصطفى الخطيب</h4><p id="userRole">مدير النظام</p></div>
@@ -2196,6 +2201,7 @@ function exportExcel(){
 // Advanced IPC platform upgrades
 let handHygieneAudits = JSON.parse(localStorage.getItem('ipc-hand-hygiene-audits') || '[]');
 let offlineQueue = JSON.parse(localStorage.getItem('offline_ipc_queue') || '[]');
+let ipcNotifications = JSON.parse(localStorage.getItem('ipc-notifications-v1') || '[]');
 let activeChecklistEditId = null;
 let activeFacilityEditId = null;
 let activeStaffEditIndex = null;
@@ -2204,6 +2210,39 @@ let assessmentPhotoCache = {};
 function saveAdvancedState(){
   localStorage.setItem('ipc-hand-hygiene-audits', JSON.stringify(handHygieneAudits));
   localStorage.setItem('offline_ipc_queue', JSON.stringify(offlineQueue));
+  localStorage.setItem('ipc-notifications-v1', JSON.stringify(ipcNotifications));
+}
+
+function addNotification(title, body, type='info'){
+  ipcNotifications.unshift({ id:'N-'+Date.now(), title, body, type, read:false, time:new Date().toLocaleString('ar-SY') });
+  if(ipcNotifications.length > 50) ipcNotifications.pop();
+  saveAdvancedState();
+  renderNotificationCenter();
+}
+
+function renderNotificationCenter(){
+  let panel = document.getElementById('notificationPanel');
+  if(!panel){
+    panel = document.createElement('aside');
+    panel.id = 'notificationPanel';
+    panel.className = 'notification-panel';
+    document.body.appendChild(panel);
+  }
+  const unread = ipcNotifications.filter(n=>!n.read).length;
+  const bellDot = document.querySelector('.icon-btn .dot');
+  if(bellDot) bellDot.style.display = unread ? '' : 'none';
+  panel.innerHTML = `<header><strong>الإشعارات</strong><button class="btn btn-secondary btn-sm" onclick="markNotificationsRead()">تمت القراءة</button></header><div class="notification-list">${ipcNotifications.map(n=>`<div class="notification-item ${n.read?'':'unread'}"><span class="n-dot"></span><div><strong>${n.title}</strong><div style="color:var(--text2);font-size:12px">${n.time}</div><div>${n.body}</div></div></div>`).join('') || '<div class="empty-state">لا توجد إشعارات.</div>'}</div>`;
+}
+
+function toggleNotifications(){
+  renderNotificationCenter();
+  document.getElementById('notificationPanel')?.classList.toggle('show');
+}
+
+function markNotificationsRead(){
+  ipcNotifications.forEach(n=>n.read=true);
+  saveAdvancedState();
+  renderNotificationCenter();
 }
 
 function systemDialog({title='تنبيه', message='', input=false, inputValue='', confirmText='حسناً', cancelText='إلغاء'}){
@@ -2599,6 +2638,7 @@ save = function(modal,msg){
     report.status = 'بانتظار الاعتماد';
     persistUiState();
     renderAll();
+    addNotification('تقرير جديد بانتظار الاعتماد', `${report.reportType} - ${report.facility}`, 'report');
   }
 };
 
@@ -2637,10 +2677,12 @@ function renderReportCenter(){
         <strong>الملخص:</strong> ${r.summary || r.notes || 'تقرير تحقق/تدقيق يحتاج مراجعة واعتماد.'}<br>
         <strong>النتيجة:</strong> ${r.compliance || 0}% | <strong>الخطورة:</strong> ${r.riskLevel || 'متوسط'} | <strong>المتابعة:</strong> ${r.nextDue || 'غير محدد'}
       </div>
+      <div class="comment-thread">${(r.comments || []).slice(-2).map(c=>`<div class="comment"><strong>${c.author}</strong> <small>${c.time}</small><br>${c.text}</div>`).join('') || '<small style="color:var(--text2)">لا توجد تعليقات بعد.</small>'}</div>
       <div class="card-actions">
         <button class="btn btn-secondary btn-sm" onclick="printProfessionalReport('${r.id}')"><i class="fas fa-file-pdf"></i> وثيقة PDF</button>
         <button class="btn btn-primary btn-sm" onclick="approveReport('${r.id}')"><i class="fas fa-check"></i> اعتماد</button>
         <button class="btn btn-danger btn-sm" onclick="rejectReport('${r.id}')"><i class="fas fa-undo"></i> مراجعة</button>
+        <button class="btn btn-secondary btn-sm" onclick="addReportComment('${r.id}')"><i class="fas fa-comment"></i> تعليق</button>
       </div>
     </article>`).join('') || '<div class="empty-state">لا توجد تقارير مطابقة.</div>';
 }
@@ -2655,6 +2697,70 @@ function exportReportsCSV(){
   a.download = 'ipc-official-reports.csv';
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+function ensureBottomNavigation(){
+  if(document.getElementById('bottomNav')) return;
+  const nav = document.createElement('nav');
+  nav.id = 'bottomNav';
+  nav.className = 'bottom-nav';
+  nav.innerHTML = [
+    ['dashboard','fa-home','الرئيسية'],
+    ['checklists','fa-clipboard-check','القوائم'],
+    ['daily','fa-file-medical','التقارير'],
+    ['incidents','fa-virus','العدوى'],
+    ['users','fa-users','المستخدمون']
+  ].map(item=>`<button onclick="showPage('${item[0]}');syncBottomNav('${item[0]}')" data-bottom-page="${item[0]}"><i class="fas ${item[1]}"></i><span>${item[2]}</span></button>`).join('');
+  document.body.appendChild(nav);
+  syncBottomNav(document.querySelector('.page.active')?.id || 'dashboard');
+}
+
+function syncBottomNav(pageId){
+  document.querySelectorAll('[data-bottom-page]').forEach(btn=>btn.classList.toggle('active', btn.dataset.bottomPage === pageId));
+}
+
+function buildSearchIndex(){
+  return [
+    ...facilities.map(f=>({type:'منشأة',title:f.name,meta:`${f.type} - ${f.location}`,page:'facilities'})),
+    ...staff.map(s=>({type:'مستخدم',title:s.name,meta:`${s.role} - ${userFacilities(s).join('، ')}`,page:'users'})),
+    ...dailyReports.map(r=>({type:'تقرير',title:r.reportType || r.templateTitle || r.id,meta:`${r.facility} - ${r.date} - ${r.status}`,page:'daily'})),
+    ...checklistTemplates.map(c=>({type:'قائمة تحقق',title:c.title,meta:`${c.department} - ${c.standard}`,page:'checklists'})),
+    ...incidents.map(i=>({type:'حالة عدوى',title:i.haiType || i.type,meta:`${i.facility} - ${i.department || ''}`,page:'incidents'}))
+  ];
+}
+
+function ensureAdvancedSearch(){
+  const box = document.querySelector('.search-box');
+  if(!box || document.getElementById('advancedSearchPanel')) return;
+  box.style.position = 'relative';
+  const panel = document.createElement('div');
+  panel.id = 'advancedSearchPanel';
+  panel.className = 'advanced-search';
+  panel.innerHTML = '<div class="results"></div>';
+  box.appendChild(panel);
+}
+
+function runAdvancedSearch(term){
+  ensureAdvancedSearch();
+  const panel = document.getElementById('advancedSearchPanel');
+  if(!panel) return;
+  const q = term.trim().toLowerCase();
+  if(!q){ panel.classList.remove('show'); return; }
+  const results = buildSearchIndex().filter(item => `${item.type} ${item.title} ${item.meta}`.toLowerCase().includes(q)).slice(0,12);
+  panel.querySelector('.results').innerHTML = results.map(r=>`<div class="search-result" onclick="showPage('${r.page}');document.getElementById('advancedSearchPanel').classList.remove('show')"><strong>${r.type}: ${r.title}</strong><div style="color:var(--text2);font-size:12px">${r.meta}</div></div>`).join('') || '<div class="empty-state">لا توجد نتائج مطابقة.</div>';
+  panel.classList.add('show');
+}
+
+async function addReportComment(id){
+  const report = findReportById(id);
+  if(!report) return;
+  const text = await systemDialog({title:'تعليق على التقرير', message:'اكتب تعليقك أو طلب التعديل.', input:true, confirmText:'إضافة تعليق'});
+  if(text === null || !text.trim()) return;
+  report.comments = report.comments || [];
+  report.comments.push({ author:currentUserProfile?.name || document.getElementById('userName')?.textContent || 'مستخدم', text:text.trim(), time:new Date().toLocaleString('ar-SY') });
+  addNotification('تعليق جديد على تقرير', `${report.id}: ${text.trim().slice(0,80)}`, 'comment');
+  persistUiState();
+  renderAll();
 }
 
 editChecklist = function(id){
@@ -2750,7 +2856,15 @@ rejectReport = async function(id){
   if(reason === null) return;
   report.status = 'بحاجة مراجعة';
   report.reviewNote = reason;
+  addNotification('تمت إعادة تقرير للمراجعة', `${report.id}: ${reason.slice(0,80)}`, 'review');
   persistUiState(); renderAll(); showToast('تمت إعادة التقرير للمراجعة');
+};
+
+const previousApproveReport = approveReport;
+approveReport = function(id){
+  previousApproveReport(id);
+  const report = findReportById(id);
+  if(report) addNotification('تم اعتماد تقرير', `${report.id} - ${report.facility}`, 'approval');
 };
 
 logout = async function(){
@@ -2843,6 +2957,8 @@ renderAll = function(){
   oldRenderAll();
   ensureAdvancedIpcModules();
   renderReportCenter();
+  ensureBottomNavigation();
+  renderNotificationCenter();
   neutralizePagePrintButtons();
   checkOutbreakAlerts();
 };
@@ -2876,9 +2992,23 @@ document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if
 
 document.querySelector('.search-box input')?.addEventListener('input', event => {
   const term = event.target.value.trim().toLowerCase();
+  runAdvancedSearch(term);
   document.querySelectorAll('tbody tr,.facility-card,.task-item,.log-item').forEach(item => {
     item.style.display = !term || item.textContent.toLowerCase().includes(term) ? '' : 'none';
   });
+});
+
+document.addEventListener('keydown', event => {
+  if(event.key === 'Escape'){
+    document.querySelectorAll('.modal.active').forEach(m=>m.classList.remove('active'));
+    document.getElementById('notificationPanel')?.classList.remove('show');
+    document.getElementById('advancedSearchPanel')?.classList.remove('show');
+  }
+  if(!event.ctrlKey) return;
+  const key = event.key.toLowerCase();
+  if(key === 'n'){ event.preventDefault(); openModal('newReportModal'); }
+  if(key === 's'){ event.preventDefault(); persistUiState(); showToast('تم حفظ البيانات'); }
+  if(key === 'p'){ event.preventDefault(); exportPDF(document.querySelector('.page.active')?.id || 'dashboard'); }
 });
 
 // Print date
